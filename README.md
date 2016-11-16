@@ -1,45 +1,45 @@
-# git-version
+# tag-version
 
 This utility makes semantic versioning of source code with git tags easy and consistent.
 
-On a new project, `git-version` displays a friendly suggestion:
+On a new project, `tag-version` displays a friendly suggestion:
 
 ```
-$ git-version
+$ tag-version
 No version found, use --bump to set to 0.0.1
 ```
 
 Upon using the `--bump` flag, the version is set:
 
 ```
-$ git-version --bump
+$ tag-version --bump
 0.0.1
 ```
 
 Attempting to bump a tagged revision will result in an error message:
 
 ```
-$ git-version --bump
+$ tag-version --bump
 Is version=0.0.1 already bumped?
 ```
 
 With no flags, the current version will be displayed:
 
 ```
-$ git-version
+$ tag-version
 0.0.1
 ```
 
-And when commits are made on top of a tag, `git-version` uses `git describe` to provide a unique version:
+And when commits are made on top of a tag, `tag-version` uses `git describe` to provide a unique version:
 
 ```
-$ git-version
+$ tag-version
 0.0.1-2-g5bd60a7
 ```
 
 ## Semantic versioning
 
-The `--bump` flag will monotonically increase the version number.  By default, the patch version -- that is, the third number in the dotted sequence.  This can be explicitly specified by running `git-version --bump --patch`.
+The `--bump` flag will monotonically increase the version number.  By default, the patch version -- that is, the third number in the dotted sequence.  This can be explicitly specified by running `tag-version --bump --patch`.
 
 Similarly, the `--minor` or `--major` argument can be given to increment the minor or major versions respectively.
 
@@ -47,8 +47,8 @@ Similarly, the `--minor` or `--major` argument can be given to increment the min
 ## Help text
 
 ```
-$ git-version -h
-usage: git-version [-h] [--bump] [--patch] [--minor] [--major]
+$ tag-version -h
+usage: tag-version [-h] [--bump] [--patch] [--minor] [--major]
 
 optional arguments:
   -h, --help  show this help message and exit
