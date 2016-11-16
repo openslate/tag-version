@@ -8,14 +8,14 @@ if not SCRIPT_DIR:
     SCRIPT_DIR = os.getcwd()
 
 
-setup(name='git-version',
+setup(name='tag-version',
       version='development',
       description='semantic versioned git tags',
       author='Roberto Aguilar',
       author_email='roberto.c.aguilar@gmail.com',
-      url='https://github.com/rca/git-version',
+      url='https://github.com/rca/tag-version',
       scripts=[
-          'git-version',
+          'tag-version',
       ],
       install_requires=[
         'sh',
