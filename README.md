@@ -30,7 +30,7 @@ $ git-version
 0.0.1
 ```
 
-And when modifications are made, `git-version` uses `git describe` to provide a unique version:
+And when commits are made on top of a tag, `git-version` uses `git describe` to provide a unique version:
 
 ```
 $ git-version
