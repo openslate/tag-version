@@ -10,7 +10,7 @@ pip install tag-version
 
 More information at: https://pypi.python.org/pypi/tag-version
 
-# Usage
+## Usage
 
 On a new project, `tag-version` displays a friendly suggestion:
 
