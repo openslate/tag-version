@@ -2,6 +2,16 @@
 
 This utility makes semantic versioning of source code with git tags easy and consistent.
 
+## Installation
+
+```
+pip install tag-version
+```
+
+More information at: https://pypi.python.org/pypi/tag-version
+
+# Usage
+
 On a new project, `tag-version` displays a friendly suggestion:
 
 ```
