@@ -23,6 +23,19 @@ $ git-version --bump
 Is version=0.0.1 already bumped?
 ```
 
+With no flags, the current version will be displayed:
+
+```
+$ git-version
+0.0.1
+```
+
+And when modifications are made, `git-version` uses `git describe` to provide a unique version:
+
+```
+$ git-version
+0.0.1-2-g5bd60a7
+```
 
 ## Semantic versioning
 
