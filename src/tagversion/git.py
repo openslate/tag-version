@@ -1,11 +1,12 @@
 from __future__ import absolute_import, print_function
 
+import os
 import sh
 import shlex
 
 import sys
 
-from .exceptions import VersionError
+from .exceptions import BranchError, VersionError
 
 INITIAL_VERSION = '0.0.0'
 
@@ -22,13 +23,37 @@ class GitVersion(object):
         self.args = args
 
     @property
+    def branch(self):
+        branch = os.environ.get('GIT_BRANCH')
+        if branch is None:
+            command = sh.git(*shlex.split('branch --no-color'))
+            for line in command.stdout.decode('utf8').strip().splitlines():
+                line = line.strip()
+                if line.startswith('*'):
+                    branch = line.split()[-1].strip()
+                    break
+            else:
+                raise BranchError('unable to determine branch')
+
+        return branch
+
+    @property
     def version(self):
         try:
             command = sh.git(*shlex.split('describe --tags'))
         except sh.ErrorReturnCode_128:
             return None
         else:
-            return command.stdout.decode('utf8').strip()
+            version = command.stdout.decode('utf8').strip()
+
+            # if the branch flag was given, check to see if we are on a tagged commit
+            if self.args.branch:
+                try:
+                    command = sh.git(*shlex.split('describe --tags --exact-match'))
+                except sh.ErrorReturnCode_128:  # not an exact match, so append the branch
+                    version = '{}-{}'.format(version, self.branch)
+
+            return version
 
     @classmethod
     def setup_subparser(cls, subcommand):
@@ -50,6 +75,10 @@ class GitVersion(object):
         parser.add_argument(
             '--major', action='store_true',
             help='bump the major version and reset minor and patch back to 0'
+        )
+        parser.add_argument(
+            '--branch', action='store_true',
+            help='append branch to the version when current commit is not tagged'
         )
 
     def get_next_version(self, version):
