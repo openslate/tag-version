@@ -22,11 +22,15 @@ class WriteFile(object):
 
         parser.set_defaults(cls=cls)
         parser.add_argument(
+            '--branch', action='store_true',
+            help='write version with branch'
+        )
+        parser.add_argument(
             'path', help='path to the file to write version in'
         )
 
     def run(self):
-        version = GitVersion().version
+        version = GitVersion(self.args).version
 
         buf = StringIO()
         with open(self.args.path, 'r') as fh:
