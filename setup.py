@@ -9,7 +9,7 @@ if not SCRIPT_DIR:
 
 
 setup(name='tag-version',
-      version='development',
+      version='{{ version }}',
       description='semantic versioned git tags',
       author='Roberto Aguilar',
       author_email='roberto.c.aguilar@gmail.com',
