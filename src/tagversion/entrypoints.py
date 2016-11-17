@@ -38,8 +38,7 @@ def main():
         'path', help='path to the file to write version in'
     )
 
-    parser.set_default_subparser('bump')
-    args = parser.parse_args()
+    args = parser.parse_args(default_subparser='bump')
 
     command = args.cls(args)
     sys.exit(command.run())
