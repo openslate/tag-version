@@ -108,16 +108,25 @@ class GitVersion(object):
     def stringify(self, version):
         return '.'.join([str(x) for x in version])
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--bump', action='store_true',
-                        help='perform a version bump, by default the current version is displayed')
-    parser.add_argument('--patch', action='store_true', default=True,
-                        help='bump the patch version, this is the default bump if one is not specified')
-    parser.add_argument('--minor', action='store_true',
-                        help='bump the minor version and reset patch back to 0')
-    parser.add_argument('--major', action='store_true',
-                        help='bump the major version and reset minor and patch back to 0')
+    parser.add_argument(
+        '--bump', action='store_true',
+        help='perform a version bump, by default the current version is displayed'
+    )
+    parser.add_argument(
+        '--patch', action='store_true', default=True,
+        help='bump the patch version, this is the default bump if one is not specified'
+    )
+    parser.add_argument(
+        '--minor', action='store_true',
+        help='bump the minor version and reset patch back to 0'
+    )
+    parser.add_argument(
+        '--major', action='store_true',
+        help='bump the major version and reset minor and patch back to 0'
+    )
 
     args = parser.parse_args()
 
