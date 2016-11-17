@@ -30,6 +30,28 @@ class GitVersion(object):
         else:
             return command.stdout.decode('utf8').strip()
 
+    @classmethod
+    def setup_subparser(cls, subcommand):
+        parser = subcommand.add_parser('bump', help=cls.__doc__)
+
+        parser.set_defaults(cls=cls)
+        parser.add_argument(
+            '--bump', action='store_true',
+            help='perform a version bump, by default the current version is displayed'
+        )
+        parser.add_argument(
+            '--patch', action='store_true', default=True,
+            help='bump the patch version, this is the default bump if one is not specified'
+        )
+        parser.add_argument(
+            '--minor', action='store_true',
+            help='bump the minor version and reset patch back to 0'
+        )
+        parser.add_argument(
+            '--major', action='store_true',
+            help='bump the major version and reset minor and patch back to 0'
+        )
+
     def get_next_version(self, version):
         # split the version and int'ify major, minor, and patch
         split_version = version.split('-', 1)[0].split('.', 3)

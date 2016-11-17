@@ -16,6 +16,15 @@ class WriteFile(object):
     def __init__(self, args):
         self.args = args
 
+    @classmethod
+    def setup_subparser(cls, subcommand):
+        parser = subcommand.add_parser('write', help=cls.__doc__)
+
+        parser.set_defaults(cls=cls)
+        parser.add_argument(
+            'path', help='path to the file to write version in'
+        )
+
     def run(self):
         version = GitVersion().version
 
