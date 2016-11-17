@@ -54,11 +54,26 @@ The `--bump` flag will monotonically increase the version number.  By default, t
 Similarly, the `--minor` or `--major` argument can be given to increment the minor or major versions respectively.
 
 
+## Write subcommand
+
+Running `tag-version write <path>` will rewrite any `{{ version }}` tags in the given path with the current tag version.
+
 ## Help text
 
 ```
 $ tag-version -h
-usage: tag-version [-h] [--bump] [--patch] [--minor] [--major]
+usage: tag-version [-h] {bump,write} ...
+
+positional arguments:
+  {bump,write}
+    bump        Get and set git version tag
+    write       Write version into a file
+
+optional arguments:
+  -h, --help    show this help message and exit
+
+$ tag-version bump -h
+usage: tag-version bump [-h] [--bump] [--patch] [--minor] [--major]
 
 optional arguments:
   -h, --help  show this help message and exit
@@ -68,4 +83,13 @@ optional arguments:
               specified
   --minor     bump the minor version and reset patch back to 0
   --major     bump the major version and reset minor and patch back to 0
+
+$ tag-version write -h
+usage: tag-version write [-h] path
+
+positional arguments:
+  path        path to the file to write version in
+
+optional arguments:
+  -h, --help  show this help message and exit
 ```
