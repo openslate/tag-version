@@ -130,5 +130,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    git_version = GitVersion(args)
-    sys.exit(git_version.run())
+    command = GitVersion(args)
+    sys.exit(command.run())
