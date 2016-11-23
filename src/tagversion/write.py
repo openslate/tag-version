@@ -6,7 +6,10 @@ from StringIO import StringIO
 
 from .git import GitVersion
 
-VERSION_RE = re.compile(r'(?P<start>.*?){{\s*version\s*}}(?P<content>.*)', re.DOTALL)
+DEFAULT_VERSION_PATTERN = r'(?P<start>.*?){{\s*version\s*}}(?P<content>.*)'
+
+def get_version_re(pattern):
+    return re.compile(pattern, re.DOTALL)
 
 
 class WriteFile(object):
@@ -26,17 +29,22 @@ class WriteFile(object):
             help='write version with branch'
         )
         parser.add_argument(
+            '--pattern', default=DEFAULT_VERSION_PATTERN,
+            help='write version with branch'
+        )
+        parser.add_argument(
             'path', help='path to the file to write version in'
         )
 
     def run(self):
         version = GitVersion(self.args).version
+        version_re = get_version_re(self.args.pattern)
 
         buf = StringIO()
         with open(self.args.path, 'r') as fh:
             content = fh.read()
             while content:
-                matches = VERSION_RE.match(content)
+                matches = version_re.match(content)
                 if matches:
                     buf.write(matches.group('start'))
                     buf.write(version)
