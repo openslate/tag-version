@@ -35,6 +35,9 @@ class GitVersion(object):
             else:
                 raise BranchError('unable to determine branch')
 
+        # clean string to remove unwanted characters
+        branch = branch.replace('/', '--')
+
         return branch
 
     @property
