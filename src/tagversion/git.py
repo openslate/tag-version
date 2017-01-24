@@ -77,7 +77,7 @@ class GitVersion(object):
             help='bump the major version and reset minor and patch back to 0'
         )
         parser.add_argument(
-            '--branch', action='store_true',
+            '--no-branch', action='store_false', dest='branch',
             help='append branch to the version when current commit is not tagged'
         )
 
