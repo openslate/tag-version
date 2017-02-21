@@ -15,6 +15,10 @@ MINOR = 1
 PATCH = 2
 
 
+def print_error(buf):
+    print(buf, file=sys.stderr)
+
+
 class GitVersion(object):
     """
     Get and set git version tag
@@ -39,6 +43,31 @@ class GitVersion(object):
         branch = branch.replace('/', '--')
 
         return branch
+
+    @property
+    def is_clean(self):
+        """
+        Returns whether the working copy is clean
+
+        When there are uncommited changes in the working copy return False
+
+        Returns:
+            Boolean whether the working copy is clean
+        """
+        result = False
+
+        command_l = 'git status --untracked --short'.split()
+        command = getattr(sh, command_l[0])(command_l[1:])
+
+        lines = command.stdout.decode('utf8').strip().splitlines()
+        for line in lines:
+            line = line.strip()
+            print_error('Untracked: {}'.format(line))
+
+        if not lines:
+            result = True
+
+        return result
 
     @property
     def version(self):
@@ -129,12 +158,17 @@ class GitVersion(object):
         return self.bump()
 
     def run(self):
+        if not self.is_clean:
+            print_error('Abort: working copy not clean.')
+
+            return 1
+
         current_version = self.version
 
         try:
             bumped = self.check_bump()
         except VersionError as exc:
-            print(exc)
+            print_error(exc)
 
             return 1
 
@@ -145,7 +179,7 @@ class GitVersion(object):
                 print(self.version)
             else:
                 next_version = self.get_next_version(INITIAL_VERSION)
-                print(
+                print_error(
                     'No version found, use --bump to set to {}'.format(self.stringify(next_version)), file=sys.stderr
                 )
 
