@@ -62,7 +62,7 @@ class GitVersion(object):
         lines = command.stdout.decode('utf8').splitlines()
         for line in lines:
             line = line.rstrip()
-            print_error('Untracked: {}'.format(line))
+            print_error('{}'.format(line))
 
         if not lines:
             result = True
