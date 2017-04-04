@@ -186,7 +186,7 @@ class GitVersion(object):
                 status = 1
         else:
             version_str = self.stringify(bumped)
-            sh.git('tag', version_str)
+            os.system(' '.join(['git', 'tag', '-a', version_str]))
 
             print(version_str)
 
