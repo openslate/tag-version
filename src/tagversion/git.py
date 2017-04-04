@@ -110,7 +110,7 @@ class GitVersion(object):
         )
         parser.add_argument(
             '--no-branch', action='store_false', dest='branch',
-            help='append branch to the version when current commit is not tagged'
+            help='do not append branch to the version when current commit is not tagged'
         )
 
     def get_next_version(self, version):
