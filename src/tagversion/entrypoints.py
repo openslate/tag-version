@@ -15,7 +15,7 @@ def main():
     GitVersion.setup_subparser(subcommand)
     WriteFile.setup_subparser(subcommand)
 
-    args = parser.parse_args(default_subparser='bump')
+    args = parser.parse_args(default_subparser='version')
 
     command = args.cls(args)
     sys.exit(command.run())

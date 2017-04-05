@@ -89,7 +89,7 @@ class GitVersion(object):
 
     @classmethod
     def setup_subparser(cls, subcommand):
-        parser = subcommand.add_parser('bump', help=cls.__doc__)
+        parser = subcommand.add_parser('version', help=cls.__doc__)
 
         parser.set_defaults(cls=cls)
         parser.add_argument(
