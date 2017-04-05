@@ -109,6 +109,10 @@ class GitVersion(object):
             help='bump the major version and reset minor and patch back to 0'
         )
         parser.add_argument(
+            '--set',
+            help='set version to the given version'
+        )
+        parser.add_argument(
             '--no-branch', action='store_false', dest='branch',
             help='do not append branch to the version when current commit is not tagged'
         )
@@ -157,6 +161,15 @@ class GitVersion(object):
 
         return self.bump()
 
+    def check_set(self):
+        """
+        Check to see if the version is being set
+        """
+        if not self.args.set:
+            return None
+
+        return self.args.set.split('.')
+
     def run(self):
         if not self.is_clean:
             print_error('Abort: working copy not clean.')
@@ -165,16 +178,20 @@ class GitVersion(object):
 
         current_version = self.version
 
-        try:
-            bumped = self.check_bump()
-        except VersionError as exc:
-            print_error(exc)
+        # check to see if an explicit version is being set
+        new_version = self.check_set()
+        if not new_version:
+            # otherwise, see if the version is being bumped
+            try:
+                new_version = self.check_bump()
+            except VersionError as exc:
+                print_error(exc)
 
-            return 1
+                return 1
 
         status = 0
 
-        if bumped is False:
+        if new_version is False:
             if current_version:
                 print(self.version)
             else:
@@ -185,7 +202,7 @@ class GitVersion(object):
 
                 status = 1
         else:
-            version_str = self.stringify(bumped)
+            version_str = self.stringify(new_version)
             os.system(' '.join(['git', 'tag', '-a', version_str]))
 
             print(version_str)
