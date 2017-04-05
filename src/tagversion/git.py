@@ -179,9 +179,9 @@ class GitVersion(object):
                 print(self.version)
             else:
                 next_version = self.get_next_version(INITIAL_VERSION)
-                print_error(
-                    'No version found, use --bump to set to {}'.format(self.stringify(next_version)), file=sys.stderr
-                )
+                print_error('No version found, use --bump to set to {}'.format(
+                    self.stringify(next_version)
+                ))
 
                 status = 1
         else:
