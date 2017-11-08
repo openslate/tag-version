@@ -72,7 +72,7 @@ class GitVersion(object):
     @property
     def version(self):
         try:
-            command = sh.git(*shlex.split('describe --tags'))
+            command = sh.git(*shlex.split('describe --tags --always'))
         except sh.ErrorReturnCode_128:
             return None
         else:
