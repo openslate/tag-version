@@ -28,12 +28,8 @@ class WriteFile(object):
 
         parser.set_defaults(cls=cls)
         parser.add_argument(
-            '--branch', action='store_true',
-            help='write version with branch'
-        )
-        parser.add_argument(
             '--pattern', default=DEFAULT_VERSION_PATTERN,
-            help='write version with branch'
+            help='a regex pattern to search and replace with the version, default "{}"'.format(DEFAULT_VERSION_PATTERN)
         )
         parser.add_argument(
             'path', help='path to the file to write version in'
