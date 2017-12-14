@@ -32,6 +32,10 @@ class WriteFile(object):
             help='a regex pattern to search and replace with the version, default "{}"'.format(DEFAULT_VERSION_PATTERN)
         )
         parser.add_argument(
+            '--no-branch', action='store_false', dest='branch',
+            help='do not append branch to the version when current commit is not tagged'
+        )
+        parser.add_argument(
             'path', help='path to the file to write version in'
         )
 
