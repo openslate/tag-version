@@ -30,14 +30,9 @@ class GitVersion(object):
     def branch(self):
         branch = os.environ.get('GIT_BRANCH')
         if branch is None:
-            command = sh.git(*shlex.split('branch --no-color'))
-            for line in command.stdout.decode('utf8').strip().splitlines():
-                line = line.strip()
-                if line.startswith('*'):
-                    branch = line.split()[-1].strip()
-                    break
-            else:
-                raise BranchError('unable to determine branch')
+            command = sh.git(*shlex.split('rev-parse --abbrev-ref HEAD'))
+            lines = command.stdout.decode('utf8').strip().splitlines()
+            branch = lines[0].strip()
 
         # clean string to remove unwanted characters
         branch = branch.replace('/', '--')
