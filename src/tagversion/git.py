@@ -39,6 +39,11 @@ class GitVersion(object):
             lines = command.stdout.decode('utf8').strip().splitlines()
             branch = lines[0].strip()
 
+            color_marker_idx = branch.find('\x1b')
+            if color_marker_idx >= 0:
+                self.logger.warning('found color marker in branch={}'.format(branch.encode("utf8")))
+                branch = branch[:color_marker_idx]
+
         # clean string to remove unwanted characters
         branch = branch.replace('/', '--')
 
