@@ -1,6 +1,7 @@
 """
 tagversion Entrypoints
 """
+import logging
 import sys
 
 from tagversion.argparse import ArgumentParser
@@ -9,6 +10,8 @@ from tagversion.write import WriteFile
 
 
 def main():
+    logging.basicConfig(level=logging.WARNING)
+
     parser = ArgumentParser()
     subcommand = parser.add_subparsers(dest='subcommand')
 

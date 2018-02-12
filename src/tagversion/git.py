@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import logging
 import os
 import sh
 import shlex
@@ -25,6 +26,10 @@ class GitVersion(object):
     """
     def __init__(self, args=None):
         self.args = args
+
+    @property
+    def logger(self):
+        return logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
 
     @property
     def branch(self):
