@@ -2,12 +2,15 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
+import re
 import sh
 import shlex
 
 import sys
 
 from .exceptions import BranchError, VersionError
+
+SEMVER_RE = re.compile(r'^[0-9]+\.[0-9]+\.[0-9]+$')
 
 INITIAL_VERSION = '0.0.0'
 
@@ -75,6 +78,10 @@ class GitVersion(object):
         return result
 
     @property
+    def is_semver(self):
+        return SEMVER_RE.match(self.version) is not None
+
+    @property
     def version(self):
         try:
             command = sh.git(*shlex.split('describe --tags --always'))
@@ -116,6 +123,10 @@ class GitVersion(object):
         parser.add_argument(
             '--set',
             help='set version to the given version'
+        )
+        parser.add_argument(
+            '--semver', action='store_true',
+            help='only print out if the current tag is a semantic version, or exit 1'
         )
         parser.add_argument(
             '--no-branch', action='store_false', dest='branch',
@@ -182,6 +193,10 @@ class GitVersion(object):
             return 1
 
         current_version = self.version
+
+        if self.args.semver:
+            if not self.is_semver:
+                return 1
 
         # check to see if an explicit version is being set
         new_version = self.check_set()
