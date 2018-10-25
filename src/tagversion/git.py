@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+from datetime import datetime
 import logging
 import os
 import re
@@ -10,7 +11,27 @@ import sys
 
 from .exceptions import BranchError, VersionError
 
-SEMVER_RE = re.compile(r'^[0-9]+\.[0-9]+\.[0-9]+$')
+# SEMVER_RE = re.compile(r'^[0-9]+\.[0-9]+\.[0-9]+$')
+
+'''
+    Uses a slightly modified version of this regex
+    https://regex101.com/r/E0iVVS/2
+'''
+SEMVER_RE = re.compile('''
+                       ^(?P<VersionTripple>
+                            (?P<Major>0|[1-9][0-9]*)\.
+                            (?P<Minor>0|[1-9][0-9]*)\.
+                            (?P<Patch>0|[1-9][0-9]*)
+                        ){1}
+                        (?P<Tags>(?:\-
+                            (?P<Prerelease>
+                                (?:(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+)){1}(?:\.(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|\.(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|\.(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+))*){1}
+                            ){0,1}(?:\+
+                            (?P<Build>
+                                (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
+                            ))
+                        ){0,1})$
+                       ''', re.VERBOSE)
 
 INITIAL_VERSION = '0.0.0'
 
@@ -32,7 +53,9 @@ class GitVersion(object):
 
     @property
     def logger(self):
-        return logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
+        return logging.getLogger('{}.{}'.format(
+            __name__,
+            self.__class__.__name__))
 
     @property
     def branch(self):
@@ -76,6 +99,19 @@ class GitVersion(object):
             result = True
 
         return result
+
+    @property
+    def is_calver(self):
+        # ex: 201809.25 from 201809.25.1-rc
+        d = '.'.join(self.version.split('.', 2)[:2])
+        try:
+            datetime.strptime(d, self.args.calver_format)
+        except AttributeError:
+            return False
+        except ValueError:
+            return False
+        else:
+            return True
 
     @property
     def is_semver(self):
@@ -129,6 +165,14 @@ class GitVersion(object):
             help='only print out if the current tag is a semantic version, or exit 1'
         )
         parser.add_argument(
+            '--calver', action='store_true',
+            help='only print out if the current tag is a calendar version, or exit 1'
+        )
+        parser.add_argument(
+            '--calver-format', action='store_true', default='%Y%m.%d',
+            help='set the calver format (ex: \'%Y%m.%d\')'
+        )
+        parser.add_argument(
             '--no-branch', action='store_false', dest='branch',
             help='do not append branch to the version when current commit is not tagged'
         )
@@ -153,18 +197,47 @@ class GitVersion(object):
 
         return split_version[:3]
 
-    def bump(self):
-        version = self.version
-        if version:
-            split_dashes = version.split('-')
-            if len(split_dashes) == 1:
-                raise VersionError('Is version={} already bumped?'.format(version))
+    def get_next_calver_version(self, version):
+        now = datetime.now().strftime(self.args.calver_format)
+        # split the current date
+        split_calver = now.split('.', 2)
+        # split the version and int'ify major, minor, and patch
+        split_version = version.split('-', 1)[0].split('.', 3)
 
-            current_version = split_dashes[0]
-        else:
+        for i in range(3):
+            split_version[i] = int(split_version[i])
+
+        if self.args.major:
+            raise VersionError('You can not bump to a major calver release.')
+        elif self.args.minor:
+            raise VersionError('You can not bump to a minor calver release.')
+        elif self.args.patch:
+            # if we are on the same day bump the patch
+            # otherwise move to the new date
+            if (now == split_version[:2]):
+                split_version[PATCH] += 1
+                split_calver.append(split_version[PATCH])
+            else:
+                split_calver.append(0)
+
+        return split_calver[:3]
+
+    def bump(self):
+        current_version = self.version
+        if not current_version:
             current_version = INITIAL_VERSION
 
-        version = self.get_next_version(current_version)
+        if self.args.calver:
+            version = self.get_next_calver_version(current_version)
+        else:
+            split_dashes = version.split('-')
+
+            if len(split_dashes) == 1:
+                raise VersionError(
+                    'Is version={} already bumped?'.format(version))
+
+            current_version = split_dashes[0]
+            version = self.get_next_version(current_version)
 
         return version
 
@@ -198,6 +271,10 @@ class GitVersion(object):
             if not self.is_semver:
                 return 1
 
+        if self.args.calver:
+            if not self.is_calver:
+                return 1
+
         # check to see if an explicit version is being set
         new_version = self.check_set()
         if not new_version:
@@ -223,7 +300,7 @@ class GitVersion(object):
                 status = 1
         else:
             version_str = self.stringify(new_version)
-            os.system(' '.join(['git', 'tag', '-a', version_str]))
+            # os.system(' '.join(['git', 'tag', '-a', version_str]))
 
             print(version_str)
 
