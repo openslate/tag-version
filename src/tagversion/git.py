@@ -207,10 +207,17 @@ class GitVersion(object):
         for i in range(3):
             split_version[i] = int(split_version[i])
 
+        # don't allow major/minor
         if self.args.major:
-            raise VersionError('You can not bump to a major calver release.')
+            raise VersionError('''
+                You can not bump to a major calver release.
+                If you want to override this use `--set --force` instead
+                ''')
         elif self.args.minor:
-            raise VersionError('You can not bump to a minor calver release.')
+            raise VersionError('''
+                You can not bump to a minor calver release.
+                If you want to override this use `--set --force` instead
+                ''')
         elif self.args.patch:
             # if we are on the same day bump the patch
             # otherwise move to the new date
