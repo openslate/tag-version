@@ -11,8 +11,6 @@ import sys
 
 from .exceptions import BranchError, VersionError
 
-# SEMVER_RE = re.compile(r'^[0-9]+\.[0-9]+\.[0-9]+$')
-
 '''
     Uses a slightly modified version of this regex
     https://regex101.com/r/E0iVVS/2
@@ -67,7 +65,8 @@ class GitVersion(object):
 
             color_marker_idx = branch.find('\x1b')
             if color_marker_idx >= 0:
-                self.logger.warning('found color marker in branch={}'.format(branch.encode("utf8")))
+                self.logger.warning('found color marker in branch={}'.format(
+                    branch.encode("utf8")))
                 branch = branch[:color_marker_idx]
 
         # clean string to remove unwanted characters
@@ -126,11 +125,13 @@ class GitVersion(object):
         else:
             version = command.stdout.decode('utf8').strip()
 
-            # if the branch flag was given, check to see if we are on a tagged commit
+            # if the branch flag was given,
+            # check to see if we are on a tagged commit
             if self.args.branch:
                 try:
                     command = sh.git(*shlex.split('describe --tags --exact-match'))
-                except sh.ErrorReturnCode_128:  # not an exact match, so append the branch
+                except sh.ErrorReturnCode_128:
+                    # not an exact match, so append the branch
                     version = '{}-{}'.format(version, self.branch)
 
             return version
@@ -201,9 +202,11 @@ class GitVersion(object):
         now = datetime.now().strftime(self.args.calver_format)
         # split the current date
         split_calver = now.split('.', 2)
+        for i in range(2):
+            split_calver[i] = int(split_calver[i])
+
         # split the version and int'ify major, minor, and patch
         split_version = version.split('-', 1)[0].split('.', 3)
-
         for i in range(3):
             split_version[i] = int(split_version[i])
 
@@ -221,7 +224,7 @@ class GitVersion(object):
         elif self.args.patch:
             # if we are on the same day bump the patch
             # otherwise move to the new date
-            if (now == split_version[:2]):
+            if (split_calver == split_version[:2]):
                 split_version[PATCH] += 1
                 split_calver.append(split_version[PATCH])
             else:
@@ -307,7 +310,7 @@ class GitVersion(object):
                 status = 1
         else:
             version_str = self.stringify(new_version)
-            # os.system(' '.join(['git', 'tag', '-a', version_str]))
+            os.system(' '.join(['git', 'tag', '-a', version_str]))
 
             print(version_str)
 
