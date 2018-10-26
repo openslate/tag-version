@@ -42,6 +42,23 @@ def print_error(buf):
     print(buf, file=sys.stderr)
 
 
+def is_calver(calver_version, calver_format):
+    # ex: 201809.25 from 201809.25.1-rc
+    d = '.'.join(calver_version.split('.', 2)[:2])
+    try:
+        datetime.strptime(d, calver_format)
+    except AttributeError:
+        return False
+    except ValueError:
+        return False
+    else:
+        return True
+
+
+def is_semver(semver_version):
+    return SEMVER_RE.match(semver_version) is not None
+
+
 class GitVersion(object):
     """
     Get and set git version tag
@@ -101,20 +118,11 @@ class GitVersion(object):
 
     @property
     def is_calver(self):
-        # ex: 201809.25 from 201809.25.1-rc
-        d = '.'.join(self.version.split('.', 2)[:2])
-        try:
-            datetime.strptime(d, self.args.calver_format)
-        except AttributeError:
-            return False
-        except ValueError:
-            return False
-        else:
-            return True
+        return(is_calver(self.version, self.args.calver_format))
 
     @property
     def is_semver(self):
-        return SEMVER_RE.match(self.version) is not None
+        return(is_semver(self.version))
 
     @property
     def version(self):
@@ -186,12 +194,10 @@ class GitVersion(object):
 
         if self.args.major:
             split_version[MAJOR] += 1
-
             split_version[MINOR] = 0
             split_version[PATCH] = 0
         elif self.args.minor:
             split_version[MINOR] += 1
-
             split_version[PATCH] = 0
         elif self.args.patch:
             split_version[PATCH] += 1
@@ -199,8 +205,8 @@ class GitVersion(object):
         return split_version[:3]
 
     def get_next_calver_version(self, version):
-        now = datetime.now().strftime(self.args.calver_format)
         # split the current date
+        now = datetime.now().strftime(self.args.calver_format)
         split_calver = now.split('.', 2)
         for i in range(2):
             split_calver[i] = int(split_calver[i])
@@ -267,6 +273,13 @@ class GitVersion(object):
         if not self.args.set:
             return None
 
+        # if there's a calver flag, can only set to a correct calver version
+        if self.args.calver:
+            if not is_calver(self.args.set, self.args.calver_format):
+                raise VersionError(
+                    'Trying to set a non-calver version: {}'.format(self.args.set))
+
+        version = self.args.set.split('.')
         return self.args.set.split('.')
 
     def run(self):
