@@ -10,9 +10,6 @@ openslatePipeline {
     mentions = '@roberto <@marcusian>'
     deployEnv = 'prod'
     lint = true
-    lintFunction = customLintFunction
-    test = true
-    testFunction = customTestFunction
     publish = publishWhen
     publishFunction = customPublishTask
     deploy = false

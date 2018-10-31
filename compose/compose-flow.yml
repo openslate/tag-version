@@ -8,7 +8,7 @@ profiles:
 
 tasks:
   jenkinslint:
-    command: compose-flow compose run -u root:docker --rm app /bin/bash -c 'pylama -r results/pylama.log || /bin/true'
+    command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log || /bin/true'
 
   publish:
-    command: compose-flow compose run -u root:docker --rm app /bin/bash ./scripts/publish.sh
+    command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh
