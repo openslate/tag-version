@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from datetime import datetime
+import json
 import logging
 import os
 import re
@@ -182,6 +183,10 @@ class GitVersion(object):
             help='set the calver format (ex: \'%Y%m.%d\')'
         )
         parser.add_argument(
+            '-m', '--message',
+            help='set the git tag message on the command line'
+        )
+        parser.add_argument(
             '--no-branch', action='store_false', dest='branch',
             help='do not append branch to the version when current commit is not tagged'
         )
@@ -244,18 +249,18 @@ class GitVersion(object):
             current_version = INITIAL_VERSION
 
         if self.args.calver:
-            version = self.get_next_calver_version(current_version)
+            next_version = self.get_next_calver_version(current_version)
         else:
-            split_dashes = version.split('-')
+            split_dashes = current_version.split('-')
 
             if len(split_dashes) == 1:
                 raise VersionError(
-                    'Is version={} already bumped?'.format(version))
+                    'Is version={} already bumped?'.format(current_version))
 
             current_version = split_dashes[0]
-            version = self.get_next_version(current_version)
+            next_version = self.get_next_version(current_version)
 
-        return version
+        return next_version
 
     def check_bump(self):
         """
@@ -282,6 +287,15 @@ class GitVersion(object):
         version = self.args.set.split('.')
         return self.args.set.split('.')
 
+    def get_tag_command(self, new_version):
+        tag_command = 'git tag '
+
+        if self.args.message:
+            tag_command += '-m {} '.format(json.dumps(self.args.message))
+
+        tag_command += new_version
+        return tag_command
+
     def run(self):
         if not self.is_clean:
             print_error('Abort: working copy not clean.')
@@ -289,14 +303,6 @@ class GitVersion(object):
             return 1
 
         current_version = self.version
-
-        if self.args.semver:
-            if not self.is_semver:
-                return 1
-
-        if self.args.calver:
-            if not self.is_calver:
-                return 1
 
         # check to see if an explicit version is being set
         new_version = self.check_set()
@@ -323,9 +329,18 @@ class GitVersion(object):
                 status = 1
         else:
             version_str = self.stringify(new_version)
-            os.system(' '.join(['git', 'tag', '-a', version_str]))
+            tag_command = self.get_tag_command(version_str)
+            os.system(tag_command)
 
             print(version_str)
+
+        if self.args.semver:
+            if not self.is_semver:
+                return 1
+
+        if self.args.calver:
+            if not self.is_calver:
+                return 1
 
         return status
 
