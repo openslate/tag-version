@@ -1,0 +1,5 @@
+services:
+  app:
+    environment:
+      - PYPI_USERNAME
+      - PYPI_PASSWORD
