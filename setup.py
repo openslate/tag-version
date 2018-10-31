@@ -2,6 +2,7 @@
 import os
 
 from distutils.core import setup
+import setuptools # noqa
 
 SCRIPT_DIR = os.path.dirname(__file__)
 if not SCRIPT_DIR:
