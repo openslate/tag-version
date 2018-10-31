@@ -1,0 +1,7 @@
+services:
+  app:
+    environment:
+      - JOB_NAME
+      - BUILD_NUMBER
+    volumes:
+      - /tmp/jenkins/${JOB_NAME}/${BUILD_NUMBER}:/usr/local/src/results
