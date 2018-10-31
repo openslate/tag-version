@@ -7,6 +7,10 @@ profiles:
     - docker-compose.yml
     - results
 
+  prod:
+    - docker-compose.yml
+    - publish
+
 tasks:
   jenkinslint:
     command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log -f pylint || /bin/true'
