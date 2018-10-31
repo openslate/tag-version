@@ -89,3 +89,6 @@ ENV/
 .ropeproject
 
 MANIFEST
+
+# compose-flow
+compose-flow-*
