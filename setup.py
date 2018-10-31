@@ -12,11 +12,11 @@ if not SCRIPT_DIR:
 
 
 setup(name='tag-version',
-      version='{{ version }}',
+      version='0.0.0',
       description='semantic versioned git tags',
-      author='Roberto Aguilar',
-      author_email='roberto.c.aguilar@gmail.com',
-      url='https://github.com/rca/tag-version',
+      author='OpenSlate',
+      author_email='code@openslate.com',
+      url='https://github.com/openslate/tag-version',
       package_dir={'': 'src'},
       packages=['tagversion'],
       install_requires=[
