@@ -1,0 +1,7 @@
+dist/
+build/
+__pycache__/
+*.pyc
+results/
+.local/
+.virtualenvs/

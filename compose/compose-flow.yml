@@ -1,0 +1,15 @@
+profiles:
+  local:
+    - docker-compose.yml
+    - mount
+
+  test:
+    - docker-compose.yml
+    - results
+
+tasks:
+  jenkinslint:
+    command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log -f pylint || /bin/true'
+
+  publish:
+    command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh
