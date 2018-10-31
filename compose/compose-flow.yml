@@ -1,6 +1,7 @@
 profiles:
   local:
     - docker-compose.yml
+    - mount
 
   test:
     - docker-compose.yml
