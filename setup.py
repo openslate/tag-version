@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import os
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 SCRIPT_DIR = os.path.dirname(__file__)
 if not SCRIPT_DIR:
@@ -14,7 +17,7 @@ setup(name='tag-version',
       author='Roberto Aguilar',
       author_email='roberto.c.aguilar@gmail.com',
       url='https://github.com/rca/tag-version',
-      package_dir = {'': 'src'},
+      package_dir={'': 'src'},
       packages=['tagversion'],
       install_requires=[
         'sh',
@@ -23,5 +26,4 @@ setup(name='tag-version',
           'console_scripts': [
               'tag-version = tagversion.entrypoints:main'
           ]
-      },
-)
+      },)
