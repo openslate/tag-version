@@ -32,7 +32,7 @@ SEMVER_RE = re.compile('''
                         ){0,1})$
                        ''', re.VERBOSE)
 
-RC_RE = re.compile(r'.*-rc(\d+)')
+RC_RE = re.compile(r'.*-rc(\d+).*')
 
 INITIAL_VERSION = '0.0.0'
 

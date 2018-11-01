@@ -128,6 +128,9 @@ will increment the release candidate number.
 Meanwhile if the latest version is a proper release, adding `--rc` will first
 bump the version according to the specified flags (e.g `--minor`) then append `-rc1`.
 
+**Note: once the latest tag is an `rc`, you must release that version (or delete the `rc` tag)
+in order to bump to a different version spec.**
+
 ### Example Usage
 
 ```
