@@ -131,7 +131,7 @@ class GitVersion(object):
     def version(self):
         try:
             command = sh.git(*shlex.split('describe --tags --always'))
-        except sh.ErrorReturnCode_128:
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
             return None
         else:
             version = command.stdout.decode('utf8').strip()
@@ -141,7 +141,7 @@ class GitVersion(object):
             if self.args.branch:
                 try:
                     command = sh.git(*shlex.split('describe --tags --exact-match'))
-                except sh.ErrorReturnCode_128:
+                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
                     # not an exact match, so append the branch
                     version = '{}-{}'.format(version, self.branch)
 
