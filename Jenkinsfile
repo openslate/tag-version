@@ -1,7 +1,7 @@
 @Library('OpenSlateProd')_  // https://github.com/openslate/jenkins-shared-library
 
-def customPublishTask = {
-    sh "compose-flow -e ${env.DEPLOY_ENV} --project-name ${env.REPO_NAME} task publish"
+def customPublishFunction = {
+    sh "compose-flow -e ${env.DEPLOY_ENV} --project-name ${env.REPO_NAME} compose run --rm app /bin/bash ./scripts/publish.sh"
 }
 
 def publishWhen = { env.TAG_NAME }
@@ -11,6 +11,6 @@ openslatePipeline {
     deployEnv = 'prod'
     lint = true
     publish = publishWhen
-    publishFunction = customPublishTask
+    publishFunction = customPublishFunction
     deploy = false
 }

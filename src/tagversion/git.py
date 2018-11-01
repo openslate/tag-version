@@ -284,11 +284,10 @@ class GitVersion(object):
                 raise VersionError(
                     'Trying to set a non-calver version: {}'.format(self.args.set))
 
-        version = self.args.set.split('.')
         return self.args.set.split('.')
 
     def get_tag_command(self, new_version):
-        tag_command = 'git tag '
+        tag_command = 'git tag -a '
 
         if self.args.message:
             tag_command += '-m {} '.format(json.dumps(self.args.message))
