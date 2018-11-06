@@ -62,6 +62,10 @@ def is_semver(semver_version):
     return SEMVER_RE.match(semver_version) is not None
 
 
+def is_rc(version):
+    return RC_RE.match(version) is not None
+
+
 class GitVersion(object):
     """
     Get and set git version tag
@@ -126,6 +130,10 @@ class GitVersion(object):
     @property
     def is_semver(self):
         return(is_semver(self.version))
+
+    @property
+    def is_rc(self):
+        return(is_rc(self.version))
 
     @property
     def version(self):
@@ -261,8 +269,7 @@ class GitVersion(object):
         if not current_version:
             current_version = INITIAL_VERSION
 
-        is_rc = re.match(RC_RE, current_version)
-        if self.args.rc and is_rc:
+        if self.args.rc and self.is_rc:
             self.logger.info('Latest version is a release candidate, incrementing...')
             next_version = self.get_next_rc_version(current_version)
         elif self.args.calver:
@@ -277,7 +284,7 @@ class GitVersion(object):
             current_version = split_dashes[0]
             next_version = self.get_next_version(current_version)
 
-        if self.args.rc and not is_rc:
+        if self.args.rc and not self.is_rc:
             self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
             next_version[-1] = str(next_version[-1]) + '-rc1'
 
@@ -353,6 +360,10 @@ class GitVersion(object):
             os.system(tag_command)
 
             print(version_str)
+
+        if self.args.rc:
+            if not self.is_rc:
+                return 1
 
         if self.args.semver:
             if not self.is_semver:
