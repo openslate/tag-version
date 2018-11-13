@@ -32,6 +32,8 @@ SEMVER_RE = re.compile('''
                         ){0,1})$
                        ''', re.VERBOSE)
 
+RC_RE = re.compile(r'.*-rc(\d+).*')
+
 INITIAL_VERSION = '0.0.0'
 
 MAJOR = 0
@@ -58,6 +60,10 @@ def is_calver(calver_version, calver_format):
 
 def is_semver(semver_version):
     return SEMVER_RE.match(semver_version) is not None
+
+
+def is_rc(version):
+    return RC_RE.match(version) is not None
 
 
 class GitVersion(object):
@@ -126,10 +132,14 @@ class GitVersion(object):
         return(is_semver(self.version))
 
     @property
+    def is_rc(self):
+        return(is_rc(self.version))
+
+    @property
     def version(self):
         try:
             command = sh.git(*shlex.split('describe --tags --always'))
-        except sh.ErrorReturnCode_128:
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
             return None
         else:
             version = command.stdout.decode('utf8').strip()
@@ -139,7 +149,7 @@ class GitVersion(object):
             if self.args.branch:
                 try:
                     command = sh.git(*shlex.split('describe --tags --exact-match'))
-                except sh.ErrorReturnCode_128:
+                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
                     # not an exact match, so append the branch
                     version = '{}-{}'.format(version, self.branch)
 
@@ -181,6 +191,10 @@ class GitVersion(object):
         parser.add_argument(
             '--calver-format', action='store_true', default='%Y%m.%d',
             help='set the calver format (ex: \'%Y%m.%d\')'
+        )
+        parser.add_argument(
+            '--rc', action='store_true',
+            help='when bumping, generate a release candidate tag instead of a proper version'
         )
         parser.add_argument(
             '-m', '--message',
@@ -243,12 +257,22 @@ class GitVersion(object):
 
         return split_calver[:3]
 
+    def get_next_rc_version(self, version):
+        current_rc = int(RC_RE.search(version).group(1))
+        next_rc = current_rc + 1
+        next_version = version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
+
+        return next_version.split('.')
+
     def bump(self):
         current_version = self.version
         if not current_version:
             current_version = INITIAL_VERSION
 
-        if self.args.calver:
+        if self.args.rc and self.is_rc:
+            self.logger.info('Latest version is a release candidate, incrementing...')
+            next_version = self.get_next_rc_version(current_version)
+        elif self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
             split_dashes = current_version.split('-')
@@ -259,6 +283,10 @@ class GitVersion(object):
 
             current_version = split_dashes[0]
             next_version = self.get_next_version(current_version)
+
+        if self.args.rc and not self.is_rc:
+            self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
+            next_version[-1] = str(next_version[-1]) + '-rc1'
 
         return next_version
 
@@ -332,6 +360,10 @@ class GitVersion(object):
             os.system(tag_command)
 
             print(version_str)
+
+        if self.args.rc:
+            if not self.is_rc:
+                return 1
 
         if self.args.semver:
             if not self.is_semver:

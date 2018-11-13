@@ -113,3 +113,30 @@ optional arguments:
   --pattern PATTERN  a regex pattern to search and replace with the version,
                      default "(?P<start>.*?){{\s*version\s*}}(?P<content>.*)"
 ```
+
+## Release Candidates
+
+To generate a release candidate tag, add the `--rc` flag to your `tag-version --bump` invocation:
+
+```
+tag-version --bump --rc
+```
+
+If the latest version if already a release candidate, then bumping with `--rc`
+will increment the release candidate number.
+
+Meanwhile if the latest version is a proper release, adding `--rc` will first
+bump the version according to the specified flags (e.g `--minor`) then append `-rc1`.
+
+**Note: once the latest tag is an `rc`, you must release that version (or delete the `rc` tag)
+in order to bump to a different version spec.**
+
+### Example Usage
+
+```
+# latest tag: 0.0.1
+tag-version --bump --minor --rc
+# latest tag: 0.1.0-rc1
+tag-version --bump --rc
+# latest tag: 0.1.0-rc2
+```
