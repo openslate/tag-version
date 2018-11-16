@@ -238,8 +238,6 @@ class GitVersion(object):
         for i in range(2):
             split_calver[i] = int(split_calver[i])
 
-        split_version = self.get_split_version(version)
-
         # don't allow major/minor
         if self.args.major:
             raise VersionError('''
@@ -254,7 +252,7 @@ class GitVersion(object):
         elif self.args.patch:
             # if there are existing tags from today, bump the patch on the last one
             # otherwise move to the new date
-            todays_tags = sh.git('tag', '--list', now + '*')
+            todays_tags = sh.git(*shlex.split(f'tag --list {now}*'))
 
             if todays_tags:
                 last_tag = sorted(todays_tags.split('\n'))[-1]
