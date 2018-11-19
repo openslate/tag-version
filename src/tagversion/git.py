@@ -223,17 +223,20 @@ class GitVersion(object):
 
         return split_version[:3]
 
+    def get_split_version(self, version):
+        """Split the provided version and int'ify major, minor, and patch"""
+        split_version = version.split('-', 1)[0].split('.', 3)
+        for i in range(3):
+            split_version[i] = int(split_version[i])
+
+        return split_version
+
     def get_next_calver_version(self, version):
         # split the current date
         now = datetime.now().strftime(self.args.calver_format)
         split_calver = now.split('.', 2)
         for i in range(2):
             split_calver[i] = int(split_calver[i])
-
-        # split the version and int'ify major, minor, and patch
-        split_version = version.split('-', 1)[0].split('.', 3)
-        for i in range(3):
-            split_version[i] = int(split_version[i])
 
         # don't allow major/minor
         if self.args.major:
@@ -247,11 +250,18 @@ class GitVersion(object):
                 If you want to override this use `--set --force` instead
                 ''')
         elif self.args.patch:
-            # if we are on the same day bump the patch
+            # if there are existing tags from today, bump the patch on the last one
             # otherwise move to the new date
-            if (split_calver == split_version[:2]):
-                split_version[PATCH] += 1
-                split_calver.append(split_version[PATCH])
+            todays_tags = sh.git(*shlex.split(f'tag --list {now}*'))
+
+            if todays_tags:
+                last_tag = sorted(todays_tags.split('\n'))[-1]
+                last_tag_split = self.get_split_version(last_tag)
+
+                if not is_rc(last_tag):
+                    last_tag_split[PATCH] += 1
+
+                split_calver.append(last_tag_split[PATCH])
             else:
                 split_calver.append(0)
 
