@@ -190,7 +190,7 @@ class GitVersion(object):
         )
         parser.add_argument(
             '--calver-format', action='store_true', default='%Y%m.%d',
-            help='set the calver format (ex: \'%Y%m.%d\')'
+            help='set the calver format (ex: \'%%Y%%m.%%d\')'
         )
         parser.add_argument(
             '--rc', action='store_true',
