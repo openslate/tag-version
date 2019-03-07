@@ -165,6 +165,10 @@ class GitVersion(object):
             help='perform a version bump, by default the current version is displayed'
         )
         parser.add_argument(
+            '-f', '--force', action='store_true',
+            help='perform the operation even if the working copy is dirty'
+        )
+        parser.add_argument(
             '--patch', action='store_true', default=True,
             help='bump the patch version, this is the default bump if one is not specified'
         )
@@ -334,7 +338,7 @@ class GitVersion(object):
         return tag_command
 
     def run(self):
-        if not self.is_clean:
+        if not self.is_clean and not self.args.force:
             print_error('Abort: working copy not clean.')
 
             return 1
