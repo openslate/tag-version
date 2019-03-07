@@ -11,6 +11,15 @@ profiles:
     - docker-compose.yml
     - publish
 
+rancher:
+  project: Ops
+
+remotes:
+  test:
+    backend: rancher
+  prod:
+    backend: rancher
+
 tasks:
   jenkinslint:
     command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log -f pylint || /bin/true'
