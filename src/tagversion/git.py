@@ -301,7 +301,11 @@ class GitVersion(object):
                     'Is version={} already bumped?'.format(current_version))
 
             current_version = split_dashes[0]
-            next_version = self.get_next_version(current_version)
+
+            if self.is_rc:
+                next_version = [int(x) for x in current_version.split('.')]
+            else:
+                next_version = self.get_next_version(current_version)
 
         if self.args.rc and not self.is_rc:
             self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
