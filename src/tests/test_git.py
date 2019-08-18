@@ -7,11 +7,26 @@ RC_VERSION = '0.1.28-rc1-1-g4fafe09-feature--skip-prefix-rows'
 
 @mock.patch('tagversion.git.sh')
 class GitTestCase(TestCase):
-    def _setup_version(self, *mocks):
+    def _setup_version(self, *mocks, version=RC_VERSION):
         version_mock = mocks[0]
-        version_mock.return_value = RC_VERSION
+        version_mock.return_value = version
 
         return version_mock
+
+    @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
+    def test_bump_to_rc(self, *mocks):
+        """
+        Ensures bumping to an RC properly revs version
+        """
+        version_mock = self._setup_version(*mocks, version='0.1.27-16-g5befeb2-feature--skip-prefix-rows')
+
+        args = mock.Mock(calver=False, major=False, minor=False, patch=True, rc=True)
+
+        git_version = GitVersion(args)
+
+        new_version = git_version.bump()
+
+        self.assertEquals([0, 1, '28-rc1'], new_version)
 
     @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
     def test_bump_rc(self, *mocks):
