@@ -295,19 +295,19 @@ class GitVersion(object):
         elif self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
-            split_dashes = current_version.split('-')
-
-            if len(split_dashes) == 1:
-                raise VersionError(
-                    'Is version={} already bumped?'.format(current_version))
-
-            current_version = split_dashes[0]
-
-            # when the versio is an RC, don't bump any version number, just strip off the RC suffix
+            # when the version is an RC, don't bump any version number, just strip off the RC suffix
             if self.is_rc:
                 matches = RC_RE.match(current_version)
                 next_version = [int(x) for x in matches.group('stable').split('.')]
             else:
+                split_dashes = current_version.split('-')
+
+                if len(split_dashes) == 1:
+                    raise VersionError(
+                        'Is version={} already bumped?'.format(current_version))
+
+                current_version = split_dashes[0]
+
                 next_version = self.get_next_version(current_version)
 
         if self.args.rc and not self.is_rc:

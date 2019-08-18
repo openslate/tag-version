@@ -46,6 +46,23 @@ class GitTestCase(TestCase):
         self.assertEquals([0, 1, 28], new_version)
 
     @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
+    def test_bump_rc_to_stable(self, *mocks):
+        """
+        Ensures running bump results in a stable, non-rc, release
+        """
+        version_mock = self._setup_version(*mocks, version='0.1.28rc2')
+
+        args = mock.Mock(calver=False, major=False, minor=False, patch=True, rc=False)
+
+        git_version = GitVersion(args)
+
+        self.assertEquals(version_mock.return_value, git_version.version)
+
+        new_version = git_version.bump()
+
+        self.assertEquals([0, 1, 28], new_version)
+
+    @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
     def test_bump_rev_rc(self, *mocks):
         """
         Ensures running bump --rc on an RC results in a proper rc tag
