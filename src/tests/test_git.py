@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 
 from tagversion.git import GitVersion, is_rc
 
-RC_VERSION = '0.1.28-rc1-1-g4fafe09-feature--skip-prefix-rows'
+RC_VERSION = '0.1.28rc1-1-g4fafe09-feature--skip-prefix-rows'
 
 
 @mock.patch('tagversion.git.sh')
@@ -26,7 +26,7 @@ class GitTestCase(TestCase):
 
         new_version = git_version.bump()
 
-        self.assertEquals([0, 1, '28-rc1'], new_version)
+        self.assertEquals([0, 1, '28rc1'], new_version)
 
     @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
     def test_bump_rc(self, *mocks):
@@ -60,7 +60,7 @@ class GitTestCase(TestCase):
 
         new_version = git_version.bump()
 
-        self.assertEquals(['0', '1', '28-rc2'], new_version)
+        self.assertEquals(['0', '1', '28rc2'], new_version)
 
     def test_get_next_rc_version(self, *mocks):
         """
@@ -68,7 +68,7 @@ class GitTestCase(TestCase):
         """
         next_version = GitVersion.get_next_rc_version(RC_VERSION)
 
-        self.assertEquals(['0', '1', '28-rc2'], next_version)
+        self.assertEquals(['0', '1', '28rc2'], next_version)
 
     @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
     def test_is_rc(self, *mocks):

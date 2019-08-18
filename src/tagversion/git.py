@@ -32,7 +32,7 @@ SEMVER_RE = re.compile('''
                         ){0,1})$
                        ''', re.VERBOSE)
 
-RC_RE = re.compile(r'(?P<full_version>.*-rc(?P<rc_number>\d+)).*')
+RC_RE = re.compile(r'(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*')
 
 INITIAL_VERSION = '0.0.0'
 
@@ -280,7 +280,7 @@ class GitVersion(object):
 
         # use the full_version match in order to remove any git version suffix
         full_version = matches.group('full_version')
-        next_version = full_version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
+        next_version = full_version.replace('rc{}'.format(current_rc), 'rc{}'.format(next_rc))
 
         return next_version.split('.')
 
@@ -305,13 +305,14 @@ class GitVersion(object):
 
             # when the versio is an RC, don't bump any version number, just strip off the RC suffix
             if self.is_rc:
-                next_version = [int(x) for x in current_version.split('.')]
+                matches = RC_RE.match(current_version)
+                next_version = [int(x) for x in matches.group('stable').split('.')]
             else:
                 next_version = self.get_next_version(current_version)
 
         if self.args.rc and not self.is_rc:
             self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
-            next_version[-1] = str(next_version[-1]) + '-rc1'
+            next_version[-1] = str(next_version[-1]) + 'rc1'
 
         return next_version
 
