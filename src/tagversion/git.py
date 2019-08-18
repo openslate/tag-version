@@ -32,7 +32,7 @@ SEMVER_RE = re.compile('''
                         ){0,1})$
                        ''', re.VERBOSE)
 
-RC_RE = re.compile(r'.*-rc(\d+).*')
+RC_RE = re.compile(r'(?P<full_version>.*-rc(?P<rc_number>\d+)).*')
 
 INITIAL_VERSION = '0.0.0'
 
@@ -271,10 +271,15 @@ class GitVersion(object):
 
         return split_calver[:3]
 
-    def get_next_rc_version(self, version):
-        current_rc = int(RC_RE.search(version).group(1))
+    @staticmethod
+    def get_next_rc_version(version):
+        matches = RC_RE.match(version)
+
+        current_rc = int(matches.group('rc_number'))
         next_rc = current_rc + 1
-        next_version = version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
+
+        full_version = matches.group('full_version')
+        next_version = full_version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
 
         return next_version.split('.')
 
