@@ -278,6 +278,7 @@ class GitVersion(object):
         current_rc = int(matches.group('rc_number'))
         next_rc = current_rc + 1
 
+        # use the full_version match in order to remove any git version suffix
         full_version = matches.group('full_version')
         next_version = full_version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
 
@@ -302,6 +303,7 @@ class GitVersion(object):
 
             current_version = split_dashes[0]
 
+            # when the versio is an RC, don't bump any version number, just strip off the RC suffix
             if self.is_rc:
                 next_version = [int(x) for x in current_version.split('.')]
             else:
