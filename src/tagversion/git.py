@@ -32,7 +32,7 @@ SEMVER_RE = re.compile('''
                         ){0,1})$
                        ''', re.VERBOSE)
 
-RC_RE = re.compile(r'.*-rc(\d+).*')
+RC_RE = re.compile(r'(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*')
 
 INITIAL_VERSION = '0.0.0'
 
@@ -165,6 +165,10 @@ class GitVersion(object):
             help='perform a version bump, by default the current version is displayed'
         )
         parser.add_argument(
+            '-f', '--force', action='store_true',
+            help='perform the operation even if the working copy is dirty'
+        )
+        parser.add_argument(
             '--patch', action='store_true', default=True,
             help='bump the patch version, this is the default bump if one is not specified'
         )
@@ -267,10 +271,16 @@ class GitVersion(object):
 
         return split_calver[:3]
 
-    def get_next_rc_version(self, version):
-        current_rc = int(RC_RE.search(version).group(1))
+    @staticmethod
+    def get_next_rc_version(version):
+        matches = RC_RE.match(version)
+
+        current_rc = int(matches.group('rc_number'))
         next_rc = current_rc + 1
-        next_version = version.replace('-rc{}'.format(current_rc), '-rc{}'.format(next_rc))
+
+        # use the full_version match in order to remove any git version suffix
+        full_version = matches.group('full_version')
+        next_version = full_version.replace('rc{}'.format(current_rc), 'rc{}'.format(next_rc))
 
         return next_version.split('.')
 
@@ -285,18 +295,24 @@ class GitVersion(object):
         elif self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
-            split_dashes = current_version.split('-')
+            # when the version is an RC, don't bump any version number, just strip off the RC suffix
+            if self.is_rc:
+                matches = RC_RE.match(current_version)
+                next_version = [int(x) for x in matches.group('stable').split('.')]
+            else:
+                split_dashes = current_version.split('-')
 
-            if len(split_dashes) == 1:
-                raise VersionError(
-                    'Is version={} already bumped?'.format(current_version))
+                if len(split_dashes) == 1:
+                    raise VersionError(
+                        'Is version={} already bumped?'.format(current_version))
 
-            current_version = split_dashes[0]
-            next_version = self.get_next_version(current_version)
+                current_version = split_dashes[0]
+
+                next_version = self.get_next_version(current_version)
 
         if self.args.rc and not self.is_rc:
             self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
-            next_version[-1] = str(next_version[-1]) + '-rc1'
+            next_version[-1] = str(next_version[-1]) + 'rc1'
 
         return next_version
 
@@ -334,7 +350,7 @@ class GitVersion(object):
         return tag_command
 
     def run(self):
-        if not self.is_clean:
+        if not self.is_clean and not self.args.force:
             print_error('Abort: working copy not clean.')
 
             return 1
