@@ -10,6 +10,10 @@ import shlex
 
 import sys
 
+from functools import lru_cache
+
+import semantic_version
+
 from .exceptions import BranchError, VersionError
 
 '''
@@ -43,6 +47,11 @@ PATCH = 2
 
 def print_error(buf):
     print(buf, file=sys.stderr)
+
+
+@lru_cache()
+def print_error_once(buf):
+    print_error(buf)
 
 
 def is_calver(calver_version, calver_format):
@@ -152,6 +161,19 @@ class GitVersion(object):
                 except sh.ErrorReturnCode_128:  # pylint: disable=E1101
                     # not an exact match, so append the branch
                     version = '{}-{}'.format(version, self.branch)
+
+            version_parsed = semantic_version.Version.coerce(version)
+
+            tag_versions = [semantic_version.Version.coerce(x) for x in sh.git(*shlex.split('--no-pager tag')).split()]
+            tag_versions.sort()
+            tag_versions.reverse()
+
+            # now check against cut tags
+            for _version_parsed in tag_versions:
+                if _version_parsed > version_parsed:
+                    print_error_once(f'warning: an existing tag has a later version than {version}, updating')
+                    version = f'{_version_parsed}-{version_parsed.prerelease[0]}'
+                    break
 
             return version
 
