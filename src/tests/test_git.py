@@ -14,6 +14,22 @@ class GitTestCase(TestCase):
         return version_mock
 
     @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
+    def test_bump_no_tag(self, *mocks):
+        """
+        Ensures bumping when there is no tag produces 0.0.1
+        """
+        version_mock = self._setup_version(*mocks, version='000000-master')
+
+        args = mock.Mock(calver=False, major=False, minor=False, patch=True, rc=False)
+
+        git_version = GitVersion(args)
+
+        new_version = git_version.bump()
+
+        self.assertEquals([0, 0, 1], new_version)
+
+
+    @mock.patch('tagversion.git.GitVersion.version', new_callable=mock.PropertyMock)
     def test_bump_to_rc(self, *mocks):
         """
         Ensures bumping to an RC properly revs version
