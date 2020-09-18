@@ -137,10 +137,12 @@ class GitVersion(object):
 
     @property
     def version(self):
+        version = None
+
         try:
             command = sh.git(*shlex.split('describe --tags --always'))
         except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-            return None
+            pass
         else:
             version = command.stdout.decode('utf8').strip()
 
@@ -153,7 +155,14 @@ class GitVersion(object):
                     # not an exact match, so append the branch
                     version = '{}-{}'.format(version, self.branch)
 
-            return version
+        # the convention being used to store tags within a monorepo is the package/module/app that the tag refers
+        # to prefixes the version number, followed by a slash, e.g. TestModule/0.0.1
+        # if the version is prefixed (a slash is in the version), return only the RHS of the tag
+        if version and '/' in version:
+            version = version.rsplit('/', 1)[-1]
+
+        return version
+
 
     @classmethod
     def setup_subparser(cls, subcommand):
@@ -171,6 +180,10 @@ class GitVersion(object):
         parser.add_argument(
             '--patch', action='store_true', default=True,
             help='bump the patch version, this is the default bump if one is not specified'
+        )
+        parser.add_argument(
+            '--prefix', action='store',
+            help='add the given prefix to the version'
         )
         parser.add_argument(
             '--minor', action='store_true',
@@ -409,5 +422,12 @@ class GitVersion(object):
 
         return status
 
-    def stringify(self, version):
-        return '.'.join([str(x) for x in version])
+    def stringify(self, new_version: list):
+        new_version_s = '.'.join([str(x) for x in new_version])
+
+        # check to see if a prefix is requested
+        prefix = self.args.prefix
+        if prefix:
+            new_version_s = f"{prefix}{new_version_s}"
+
+        return new_version_s
