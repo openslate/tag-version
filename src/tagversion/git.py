@@ -63,7 +63,7 @@ def is_semver(semver_version):
 
 
 def is_rc(version):
-    return RC_RE.match(version) is not None
+    return (RC_RE.match(version) is not None) if version else False
 
 
 class GitVersion(object):
@@ -286,17 +286,20 @@ class GitVersion(object):
 
     def bump(self):
         current_version = self.version
-        if not current_version:
-            current_version = INITIAL_VERSION
+        current_is_rc = self.is_rc
 
-        if self.args.rc and self.is_rc:
+        if current_version is None:
+            print_error('No commits found - please commit something before bumping')
+            return None
+
+        if self.args.rc and current_is_rc:
             self.logger.info('Latest version is a release candidate, incrementing...')
             next_version = self.get_next_rc_version(current_version)
         elif self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
-            # when the version is an RC, don't bump any version number, just strip off the RC suffix
-            if self.is_rc:
+            # when this commit is an RC, don't bump any version number, just strip off the RC suffix
+            if current_is_rc:
                 matches = RC_RE.match(current_version)
                 next_version = [int(x) for x in matches.group('stable').split('.')]
             else:
@@ -305,12 +308,15 @@ class GitVersion(object):
                 if len(split_dashes) == 1:
                     raise VersionError(
                         'Is version={} already bumped?'.format(current_version))
-
-                current_version = split_dashes[0]
+                if len(split_dashes) == 2:
+                    self.logger.info('No tags found, bumping initial version')
+                    current_version = INITIAL_VERSION
+                else:
+                    current_version = split_dashes[0]
 
                 next_version = self.get_next_version(current_version)
 
-        if self.args.rc and not self.is_rc:
+        if self.args.rc and not current_is_rc:
             self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
             next_version[-1] = str(next_version[-1]) + 'rc1'
 
@@ -380,6 +386,8 @@ class GitVersion(object):
                 ))
 
                 status = 1
+        elif new_version is None:
+            return 1
         else:
             version_str = self.stringify(new_version)
             tag_command = self.get_tag_command(version_str)
