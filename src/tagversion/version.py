@@ -2,11 +2,12 @@ import re
 
 from .exceptions import VersionError
 
-'''
+"""
     Uses a slightly modified version of this regex
     https://regex101.com/r/E0iVVS/2
-'''
-SEMVER_RE = re.compile('''
+"""
+SEMVER_RE = re.compile(
+    """
                        ^(?P<prefix>.*/)?
                        (?P<version_triple>
                             (?P<major>0|[1-9][0-9]*)\.
@@ -21,11 +22,23 @@ SEMVER_RE = re.compile('''
                                 (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
                             ))
                         ){0,1})$
-                       ''', re.VERBOSE)
+                       """,
+    re.VERBOSE,
+)
 
 
 class Version:
-    def __init__(self, major="0", minor="0", patch="0", prefix=None, prerelease=None, tags=None, build=None, version_triple=None):
+    def __init__(
+        self,
+        major="0",
+        minor="0",
+        patch="0",
+        prefix=None,
+        prerelease=None,
+        tags=None,
+        build=None,
+        version_triple=None,
+    ):
         """
         Args:
             version_triple: the dotted version number, e.g. '1.2.3'
@@ -56,7 +69,7 @@ class Version:
         return self.stringify()
 
     @classmethod
-    def parse(cls, version_s: str) -> 'Version':
+    def parse(cls, version_s: str) -> "Version":
         matches = SEMVER_RE.match(version_s)
         if not matches:
             raise VersionError(f"unable to parse version_s={version_s}")
