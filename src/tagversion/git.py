@@ -11,6 +11,7 @@ import shlex
 import sys
 
 from .exceptions import BranchError, VersionError
+from .version import Version
 
 """
     Uses a slightly modified version of this regex
@@ -141,13 +142,14 @@ class GitVersion(object):
     @property
     def version(self):
         version = None
+        version_s = None
 
         try:
             command = sh.git(*shlex.split("describe --tags --always"))
         except sh.ErrorReturnCode_128:  # pylint: disable=E1101
             pass
         else:
-            version = command.stdout.decode("utf8").strip()
+            version_s = command.stdout.decode("utf8").strip()
 
             # if the branch flag was given,
             # check to see if we are on a tagged commit
@@ -156,13 +158,10 @@ class GitVersion(object):
                     command = sh.git(*shlex.split("describe --tags --exact-match"))
                 except sh.ErrorReturnCode_128:  # pylint: disable=E1101
                     # not an exact match, so append the branch
-                    version = "{}-{}".format(version, self.branch)
+                    version_s = "{}-{}".format(version_s, self.branch)
 
-        # the convention being used to store tags within a monorepo is the package/module/app that the tag refers
-        # to prefixes the version number, followed by a slash, e.g. TestModule/0.0.1
-        # if the version is prefixed (a slash is in the version), return only the RHS of the tag
-        if version and "/" in version:
-            version = version.rsplit("/", 1)[-1]
+        if version_s:
+            version = Version.parse(version_s)
 
         return version
 
@@ -175,6 +174,11 @@ class GitVersion(object):
             "--bump",
             action="store_true",
             help="perform a version bump, by default the current version is displayed",
+        )
+        parser.add_argument(
+            "--display-prefix",
+            action="store_true",
+            help="when printing out the version display the prefix",
         )
         parser.add_argument(
             "-f",
@@ -412,7 +416,10 @@ class GitVersion(object):
 
         if new_version is False:
             if current_version:
-                print(self.version)
+                version_s = current_version.stringify(
+                    display_prefix=self.args.display_prefix
+                )
+                print(version_s)
             else:
                 next_version = self.get_next_version(INITIAL_VERSION)
                 print_error(
