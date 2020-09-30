@@ -76,10 +76,10 @@ class Version:
 
         return Version(**matches.groupdict())
 
-    def stringify(self):
+    def stringify(self, display_prefix: bool = True):
         version = f"{self.major}.{self.minor}.{self.patch}"
 
-        if self.prefix:
+        if display_prefix and self.prefix:
             version = f"{self.prefix}{version}"
 
         if self.prerelease:
