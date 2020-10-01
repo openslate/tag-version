@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import typing
 import sh
 import shlex
 
@@ -38,7 +39,7 @@ SEMVER_RE = re.compile(
 
 RC_RE = re.compile(r"(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*")
 
-INITIAL_VERSION = "0.0.0"
+INITIAL_VERSION = Version.parse("0.0.0")
 
 MAJOR = 0
 MINOR = 1
@@ -102,6 +103,27 @@ class GitVersion(object):
 
         return branch
 
+    def get_git_tag_version(self) -> typing.Optional[str]:
+        version_s = None
+
+        try:
+            command = sh.git(*shlex.split("describe --tags --always"))
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
+            pass
+        else:
+            version_s = command.stdout.decode("utf8").strip()
+
+            # if the branch flag was given,
+            # check to see if we are on a tagged commit
+            if self.args.branch:
+                try:
+                    command = sh.git(*shlex.split("describe --tags --exact-match"))
+                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
+                    # not an exact match, so append the branch
+                    version_s = "{}-{}".format(version_s, self.branch)
+
+        return version_s
+
     @property
     def is_clean(self):
         """
@@ -129,37 +151,21 @@ class GitVersion(object):
 
     @property
     def is_calver(self):
-        return is_calver(self.version, self.args.calver_format)
+        return is_calver(str(self.version), self.args.calver_format)
 
     @property
     def is_semver(self):
-        return is_semver(self.version)
+        return is_semver(str(self.version))
 
     @property
     def is_rc(self):
-        return is_rc(self.version)
+        return is_rc(str(self.version))
 
     @property
     def version(self):
         version = None
-        version_s = None
 
-        try:
-            command = sh.git(*shlex.split("describe --tags --always"))
-        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-            pass
-        else:
-            version_s = command.stdout.decode("utf8").strip()
-
-            # if the branch flag was given,
-            # check to see if we are on a tagged commit
-            if self.args.branch:
-                try:
-                    command = sh.git(*shlex.split("describe --tags --exact-match"))
-                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-                    # not an exact match, so append the branch
-                    version_s = "{}-{}".format(version_s, self.branch)
-
+        version_s = self.get_git_tag_version()
         if version_s:
             version = Version.parse(version_s)
 
@@ -237,24 +243,6 @@ class GitVersion(object):
             help="do not append branch to the version when current commit is not tagged",
         )
 
-    def get_next_version(self, version):
-        # split the version and int'ify major, minor, and patch
-        split_version = version.split("-", 1)[0].split(".", 3)
-        for i in range(3):
-            split_version[i] = int(split_version[i])
-
-        if self.args.major:
-            split_version[MAJOR] += 1
-            split_version[MINOR] = 0
-            split_version[PATCH] = 0
-        elif self.args.minor:
-            split_version[MINOR] += 1
-            split_version[PATCH] = 0
-        elif self.args.patch:
-            split_version[PATCH] += 1
-
-        return split_version[:3]
-
     def get_split_version(self, version):
         """Split the provided version and int'ify major, minor, and patch"""
         split_version = version.split("-", 1)[0].split(".", 3)
@@ -318,44 +306,33 @@ class GitVersion(object):
 
         return next_version.split(".")
 
-    def bump(self):
-        current_version = self.version
-        current_is_rc = self.is_rc
+    def bump(self, version: "Version" = None) -> "Version":
+        current_version = version.copy() or self.version
 
         if current_version is None:
             print_error("No commits found - please commit something before bumping")
             return None
 
-        if self.args.rc and current_is_rc:
-            self.logger.info("Latest version is a release candidate, incrementing...")
-            next_version = self.get_next_rc_version(current_version)
-        elif self.args.calver:
+        if self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
-            # when this commit is an RC, don't bump any version number, just strip off the RC suffix
-            if current_is_rc:
-                matches = RC_RE.match(current_version)
-                next_version = [int(x) for x in matches.group("stable").split(".")]
+            if current_version.is_release:
+                raise VersionError(
+                    "Is version={} already bumped?".format(current_version)
+                )
+
+            if current_version.is_unreleased:
+                self.logger.info("No tags found, bumping initial version")
+                next_version = INITIAL_VERSION.copy()
             else:
-                split_dashes = current_version.split("-")
+                next_version = current_version.copy()
 
-                if len(split_dashes) == 1:
-                    raise VersionError(
-                        "Is version={} already bumped?".format(current_version)
-                    )
-                if len(split_dashes) == 2:
-                    self.logger.info("No tags found, bumping initial version")
-                    current_version = INITIAL_VERSION
-                else:
-                    current_version = split_dashes[0]
-
-                next_version = self.get_next_version(current_version)
-
-        if self.args.rc and not current_is_rc:
-            self.logger.info(
-                "Latest version is not a release candidate, generating initial rc tag..."
+            next_version.bump(
+                bump_major=self.args.major,
+                bump_minor=self.args.minor,
+                bump_patch=self.args.patch,
+                bump_prerelease=self.args.rc,
             )
-            next_version[-1] = str(next_version[-1]) + "rc1"
 
         return next_version
 
@@ -421,7 +398,7 @@ class GitVersion(object):
                 )
                 print(version_s)
             else:
-                next_version = self.get_next_version(INITIAL_VERSION)
+                next_version = self.bump(version=INITIAL_VERSION)
                 print_error(
                     "No version found, use --bump to set to {}".format(
                         self.stringify(next_version)
@@ -452,12 +429,5 @@ class GitVersion(object):
 
         return status
 
-    def stringify(self, new_version: list):
-        new_version_s = ".".join([str(x) for x in new_version])
-
-        # check to see if a prefix is requested
-        prefix = self.args.prefix
-        if prefix:
-            new_version_s = f"{prefix}{new_version_s}"
-
-        return new_version_s
+    def stringify(self, new_version: "Version"):
+        return new_version.stringify(display_prefix=self.args.display_prefix)
