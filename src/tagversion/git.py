@@ -307,7 +307,7 @@ class GitVersion(object):
         return next_version.split(".")
 
     def bump(self, version: "Version" = None) -> "Version":
-        current_version = version.copy() or self.version
+        current_version = (version and version.copy()) or self.version
 
         if current_version is None:
             print_error("No commits found - please commit something before bumping")
