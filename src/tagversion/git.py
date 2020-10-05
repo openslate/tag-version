@@ -14,28 +14,6 @@ import sys
 from .exceptions import BranchError, VersionError
 from .version import Version
 
-"""
-    Uses a slightly modified version of this regex
-    https://regex101.com/r/E0iVVS/2
-"""
-SEMVER_RE = re.compile(
-    """
-                       ^(?P<VersionTripple>
-                            (?P<Major>0|[1-9][0-9]*)\.
-                            (?P<Minor>0|[1-9][0-9]*)\.
-                            (?P<Patch>0|[1-9][0-9]*)
-                        ){1}
-                        (?P<Tags>(?:\-
-                            (?P<Prerelease>
-                                (?:(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+)){1}(?:\.(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|\.(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|\.(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+))*){1}
-                            ){0,1}(?:\+
-                            (?P<Build>
-                                (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
-                            ))
-                        ){0,1})$
-                       """,
-    re.VERBOSE,
-)
 
 RC_RE = re.compile(r"(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*")
 
@@ -61,10 +39,6 @@ def is_calver(calver_version, calver_format):
         return False
     else:
         return True
-
-
-def is_semver(semver_version):
-    return SEMVER_RE.match(semver_version) is not None
 
 
 def is_rc(version):
@@ -155,7 +129,9 @@ class GitVersion(object):
 
     @property
     def is_semver(self):
-        return is_semver(str(self.version))
+        version = self.version
+
+        return version and version.is_semver
 
     @property
     def is_rc(self):
