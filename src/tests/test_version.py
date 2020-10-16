@@ -132,7 +132,7 @@ class VersionTestCase(TestCase):
                 minor=0,
                 patch=1,
                 prefix="TestModule/",
-                prereleasedash="-",
+                prerelease_separator="-",
                 prerelease="16-g5befeb2",
             ),
             version,
@@ -178,3 +178,16 @@ class VersionTestCase(TestCase):
         )
 
         self.assertEquals(version_s, str(version))
+
+    def test_stringify_json(self, *mocks):
+        """Ensure the version is returned as json"""
+        self.maxDiff = 1e6
+
+        version = Version.parse("0.0.0-6-gb57b5ca-env--dev-TestModule")
+
+        version_s = version.stringify_json()
+
+        self.assertEquals(
+            '{"version_triple": "0.0.0", "major": "0", "minor": "0", "patch": "0", "prefix": "", "prefix_separator": "", "tags": "-6-gb57b5ca-env--dev-TestModule", "prerelease": "6-gb57b5ca-env--dev-TestModule", "prerelease_separator": "-", "build": ""}',
+            version_s,
+        )

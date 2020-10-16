@@ -120,6 +120,18 @@ class Version:
 
         return new_version
 
+    def _get_semver(self) -> str:
+        """
+        Returns the major.minor.patch component
+        """
+        version = ""
+        if None not in (self.major, self.minor, self.patch):
+            version = f"{self.major}.{self.minor}"
+            if self.patch:
+                version = f"{version}.{self.patch}"
+
+        return version
+
     @property
     def is_prerelease(self):
         """
@@ -160,15 +172,45 @@ class Version:
 
         return Version(**matches.groupdict())
 
-    def stringify(self, display_prefix: bool = True) -> str:
-        version = ""
-        if None not in (self.major, self.minor, self.patch):
-            version = f"{self.major}.{self.minor}"
-            if self.patch:
-                version = f"{version}.{self.patch}"
+    def stringify(self, format: str = "default", args: object = None) -> str:
+        stringify_method = getattr(self, f"stringify_{format}")
 
+        return stringify_method(args=args)
+
+    def stringify_default(self, args: object = None) -> str:
+        version = self._get_semver()
+
+        display_prefix = args.display_prefix if args else True
         if display_prefix and self.prefix:
-            version = f"{self.prefix}{version}"
+            version = f"{self.prefix}{self.prefix_separator}{version}"
+
+        if self.prerelease:
+            version = f"{version}{self.prerelease_separator}{self.prerelease}"
+
+        return version
+
+    def stringify_docker(self, args: object = None) -> str:
+        version = self._get_semver()
+
+        if self.prerelease:
+            version = f"{version}{self.prerelease_separator}{self.prerelease}"
+
+        display_prefix = args.display_prefix if args else None
+        if display_prefix and self.prefix:
+            version = f"{version}-{self.prefix}"
+
+        return version
+
+    def stringify_json(self, args: object = None) -> str:
+        """Returns the parsed version as a JSON string"""
+        return json.dumps(self.__dict__)
+
+    def stringify_sugar(self, args: object = None):
+        version = self._get_semver()
+
+        build = args.build if args else None
+        if build:
+            version = f"{version}-{build}"
 
         if self.prerelease:
             version = f"{version}{self.prerelease_separator or ''}{self.prerelease}"
