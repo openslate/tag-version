@@ -16,6 +16,7 @@ class GitTestCase(TestCase):
             minor=False,
             patch=False,
             prefix=None,
+            prefix_separator=None,
             rc=False,
             display_prefix=True,
             format="default",
@@ -158,17 +159,17 @@ class GitTestCase(TestCase):
         self.assertEquals("2", new_version.minor)
         self.assertEquals("3", new_version.patch)
 
-    def test_stringify_docker(self, *mocks):
+    def test_stringify_change_prefix_separator(self, *mocks):
         """
-        ;prefix version is properly converted to a docker tag string
+        Ensure the prefix separator can be changed
         """
         version_mock = self._setup_version(
             *mocks, version="TestModule/0.0.1-16-g5befeb2"
         )
 
-        args = self._get_args(format="docker", display_prefix=True)
+        args = self._get_args(prefix_separator="-")
 
         git_version = GitVersion(args)
         new_version_s = git_version.stringify(git_version.version)
 
-        self.assertEquals("0.0.1-16-g5befeb2-TestModule", new_version_s)
+        self.assertEquals("TestModule-0.0.1-16-g5befeb2", new_version_s)

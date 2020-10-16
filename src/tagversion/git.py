@@ -194,6 +194,11 @@ class GitVersion(object):
             "--prefix", action="store", help="add the given prefix to the version"
         )
         parser.add_argument(
+            "--prefix-separator",
+            action="store",
+            help="change the found separator to this one",
+        )
+        parser.add_argument(
             "--minor",
             action="store_true",
             help="bump the minor version and reset patch back to 0",
@@ -424,8 +429,10 @@ class GitVersion(object):
     def stringify(self, new_version: "Version", format=None):
         format = format or self.args.format
 
-        prefix = self.args.prefix
-        if prefix:
-            new_version.prefix = prefix
+        # customize the version object as specified by the arguments passed to the command
+        for attr in ("prefix", "prefix_separator"):
+            value = getattr(self.args, attr)
+            if value:
+                setattr(new_version, attr, value)
 
         return new_version.stringify(format=format, args=self.args)

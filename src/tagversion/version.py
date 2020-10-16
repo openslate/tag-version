@@ -189,18 +189,6 @@ class Version:
 
         return version
 
-    def stringify_docker(self, args: object = None) -> str:
-        version = self._get_semver()
-
-        if self.prerelease:
-            version = f"{version}{self.prerelease_separator}{self.prerelease}"
-
-        display_prefix = args.display_prefix if args else None
-        if display_prefix and self.prefix:
-            version = f"{version}-{self.prefix}"
-
-        return version
-
     def stringify_json(self, args: object = None) -> str:
         """Returns the parsed version as a JSON string"""
         return json.dumps(self.__dict__)
