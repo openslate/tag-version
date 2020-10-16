@@ -1,29 +1,34 @@
+import json
 import re
 
 from .exceptions import PrereleaseError, VersionError
 
 """
-    Uses a slightly modified version of this regex
-    https://regex101.com/r/E0iVVS/2
+Uses a slightly modified version of this regex
+https://regex101.com/r/E0iVVS/2
+
+copied to:
+
+https://regex101.com/r/NpbTSw/3
 """
 SEMVER_RE = re.compile(
     r"""
-                       ^(?P<prefix>.*/)?
-                       (?P<version_triple>
-                            (?P<major>0|[1-9][0-9]*)\.
-                            (?P<minor>0|[1-9][0-9]*)\.?
-                            (?P<patch>0|[1-9][0-9]*)?
-                        ){0,1}
-                        (?P<tags>(?:
-                            (?P<prereleasedash>\-?)
-                            (?P<prerelease>
-                                (?:(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+)){1}(?:\.(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|\.(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|\.(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+))*){1}
-                            ){0,1}(?:\+
-                            (?P<build>
-                                (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
-                            ))
-                        ){0,1})$
-                       """,
+    ^(?:(?P<prefix>.*)(?P<prefix_separator>.*/))?
+    (?P<version_triple>
+        (?P<major>0|[1-9][0-9]*)\.
+        (?P<minor>0|[1-9][0-9]*)\.?
+        (?P<patch>0|[1-9][0-9]*)?
+    ){0,1}
+    (?P<tags>(?:
+        (?P<prerelease_separator>\-?)
+        (?P<prerelease>
+            (?:(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+)){1}(?:\.(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|\.(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|\.(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+))*){1}
+        ){0,1}(?:\+
+        (?P<build>
+            (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
+        ))
+    ){0,1})$
+    """,
     re.VERBOSE,
 )
 
@@ -39,8 +44,9 @@ class Version:
         minor="0",
         patch="0",
         prefix=None,
+        prefix_separator=None,
         prerelease=None,
-        prereleasedash=None,
+        prerelease_separator=None,
         tags=None,
         build=None,
         version_triple=None,
@@ -60,11 +66,12 @@ class Version:
         self.major = major
         self.minor = minor
         self.patch = patch
-        self.prefix = prefix
+        self.prefix = prefix or ""
+        self.prefix_separator = prefix_separator or ""
         self.tags = tags
-        self.prerelease = prerelease
-        self.prereleasedash = prereleasedash
-        self.build = build
+        self.prerelease = prerelease or ""
+        self.prerelease_separator = prerelease_separator or ""
+        self.build = build or ""
 
     def __eq__(self, other):
         return str(self) == str(other)
@@ -99,12 +106,12 @@ class Version:
 
                 self.prerelease = f"rc{int(matches.group('rc_number'))+1}"
             else:
-                self.prereleasedash = None
+                self.prerelease_separator = ""
                 self.prerelease = "rc1"
 
         # when everything is False and the version is a prerelease, drop the prerelease
         if self.prerelease and not bump_prerelease:
-            self.prereleasedash = None
+            self.prerelease_separator = ""
             self.prerelease = None
 
     def copy(self) -> "Version":
@@ -164,6 +171,6 @@ class Version:
             version = f"{self.prefix}{version}"
 
         if self.prerelease:
-            version = f"{version}{self.prereleasedash or ''}{self.prerelease}"
+            version = f"{version}{self.prerelease_separator or ''}{self.prerelease}"
 
         return version
