@@ -181,13 +181,22 @@ class VersionTestCase(TestCase):
 
     def test_stringify_json(self, *mocks):
         """Ensure the version is returned as json"""
-        self.maxDiff = 1e6
-
         version = Version.parse("0.0.0-6-gb57b5ca-env--dev-TestModule")
 
         version_s = version.stringify_json()
 
         self.assertEquals(
             '{"version_triple": "0.0.0", "major": "0", "minor": "0", "patch": "0", "prefix": "", "prefix_separator": "", "tags": "-6-gb57b5ca-env--dev-TestModule", "prerelease": "6-gb57b5ca-env--dev-TestModule", "prerelease_separator": "-", "build": ""}',
+            version_s,
+        )
+
+    def test_stringify_sugar_with_build(self, *mocks):
+        """ensure the stringified version properly places the build number"""
+        version = Version.parse("0.0.0-6-gb57b5ca-env--dev-TestModule")
+
+        version_s = version.stringify_sugar(args=mock.Mock(build="1234"))
+
+        self.assertEquals(
+            "0.0.0-1234-6-gb57b5ca-env--dev-TestModule",
             version_s,
         )
