@@ -80,6 +80,12 @@ class GitVersion(object):
     def get_git_tag_version(self) -> typing.Optional[str]:
         version_s = None
 
+        is_tagged = True  # when the commit is directly tagged
+        try:
+            command = sh.git(*shlex.split("describe --tags --exact-match"))
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
+            is_tagged = False
+
         try:
             command = sh.git(*shlex.split("describe --tags --always"))
         except sh.ErrorReturnCode_128:  # pylint: disable=E1101
@@ -89,12 +95,9 @@ class GitVersion(object):
 
             # if the branch flag was given,
             # check to see if we are on a tagged commit
-            if self.args.branch:
-                try:
-                    command = sh.git(*shlex.split("describe --tags --exact-match"))
-                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-                    # not an exact match, so append the branch
-                    version_s = "{}-{}".format(version_s, self.branch)
+            if self.args.branch and not is_tagged:
+                # this commit is not tagged directly, so append the branch
+                version_s = "{}-{}".format(version_s, self.branch)
 
         return version_s
 
@@ -153,13 +156,20 @@ class GitVersion(object):
 
         parser.set_defaults(cls=cls)
         parser.add_argument(
+            "--build",
+            action="store",
+            help="pass along a build number to integrate to the output format",
+        )
+        parser.add_argument(
             "--bump",
             action="store_true",
             help="perform a version bump, by default the current version is displayed",
         )
         parser.add_argument(
-            "--display-prefix",
-            action="store_true",
+            "--no-display-prefix",
+            action="store_false",
+            dest="display_prefix",
+            default=True,
             help="when printing out the version display the prefix",
         )
         parser.add_argument(
@@ -167,6 +177,12 @@ class GitVersion(object):
             "--force",
             action="store_true",
             help="perform the operation even if the working copy is dirty",
+        )
+        parser.add_argument(
+            "--format",
+            action="store",
+            default="default",
+            help="print version as a specific format (currently supports 'default' and 'docker')",
         )
         parser.add_argument(
             "--patch",
@@ -335,7 +351,7 @@ class GitVersion(object):
                     "Trying to set a non-calver version: {}".format(self.args.set)
                 )
 
-        return self.args.set.split(".")
+        return Version.parse(self.args.set)
 
     def get_tag_command(self, new_version):
         tag_command = "git tag -a "
@@ -368,12 +384,12 @@ class GitVersion(object):
         status = 0
 
         if new_version is False:
+            # when a previous tag exists in the repo, something will be returned,
+            # but nothing if there are no previous tags
             if current_version:
-                version_s = current_version.stringify(
-                    display_prefix=self.args.display_prefix
-                )
-                print(version_s)
+                print(self.stringify(current_version))
             else:
+                # error out with next steps on how to set the version
                 next_version = self.bump(version=INITIAL_VERSION)
                 print_error(
                     "No version found, use --bump to set to {}".format(
@@ -405,5 +421,11 @@ class GitVersion(object):
 
         return status
 
-    def stringify(self, new_version: "Version"):
-        return new_version.stringify(display_prefix=self.args.display_prefix)
+    def stringify(self, new_version: "Version", format=None):
+        format = format or self.args.format
+
+        prefix = self.args.prefix
+        if prefix:
+            new_version.prefix = prefix
+
+        return new_version.stringify(format=format, args=self.args)

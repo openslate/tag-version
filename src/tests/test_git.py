@@ -17,7 +17,8 @@ class GitTestCase(TestCase):
             patch=False,
             prefix=None,
             rc=False,
-            display_prefix=False,
+            display_prefix=True,
+            format="default",
         )
 
         for k, v in kwargs.items():
@@ -115,7 +116,7 @@ class GitTestCase(TestCase):
 
     def test_bump_project_prefix(self, *mocks):
         """
-        When bumping a tag with a prefix, only return the version
+        When bumping a tag with a prefix, include the prefix
         """
         version_mock = self._setup_version(
             *mocks, version="TestModule/0.0.1-16-g5befeb2"
@@ -127,4 +128,47 @@ class GitTestCase(TestCase):
         new_version = git_version.bump()
         new_version_s = git_version.stringify(new_version)
 
-        self.assertEquals("0.0.2", new_version_s)
+        self.assertEquals("TestModule/0.0.2", new_version_s)
+
+    def test_bump_project_set_prefix(self, *mocks):
+        """
+        when bumping a tag and a prefix is specified, use the specified prefix
+        """
+        version_mock = self._setup_version(
+            *mocks, version="TestModule/0.0.1-16-g5befeb2"
+        )
+
+        args = self._get_args(patch=True, prefix="NewPrefix")
+
+        git_version = GitVersion(args)
+        new_version = git_version.bump()
+
+        new_version_s = git_version.stringify(new_version)
+
+        self.assertEquals("NewPrefix/0.0.2", new_version_s)
+
+    def test_set(self, *mocks):
+        """Ensure checking for a version being set parses the version"""
+        args = self._get_args(set="1.2.3")
+        git_version = GitVersion(args)
+
+        new_version = git_version.check_set()
+
+        self.assertEquals("1", new_version.major)
+        self.assertEquals("2", new_version.minor)
+        self.assertEquals("3", new_version.patch)
+
+    def test_stringify_docker(self, *mocks):
+        """
+        ;prefix version is properly converted to a docker tag string
+        """
+        version_mock = self._setup_version(
+            *mocks, version="TestModule/0.0.1-16-g5befeb2"
+        )
+
+        args = self._get_args(format="docker", display_prefix=True)
+
+        git_version = GitVersion(args)
+        new_version_s = git_version.stringify(git_version.version)
+
+        self.assertEquals("0.0.1-16-g5befeb2-TestModule", new_version_s)
