@@ -55,7 +55,7 @@ class WriteFile(object):
                 matches = version_re.match(content)
                 if matches:
                     buf.write(matches.group("start"))
-                    buf.write(version)
+                    buf.write(version.stringify())
 
                     content = matches.group("content")
                 else:
