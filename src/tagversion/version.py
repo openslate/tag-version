@@ -196,9 +196,8 @@ class Version:
     def stringify_sugar(self, args: object = None):
         version = self._get_semver()
 
-        build = args.build if args else None
-        if build:
-            version = f"{version}-{build}"
+        if self.build:
+            version = f"{version}-{self.build}"
 
         if self.prerelease:
             version = f"{version}{self.prerelease_separator or ''}{self.prerelease}"

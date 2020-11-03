@@ -148,6 +148,10 @@ class GitVersion(object):
         if version_s:
             version = Version.parse(version_s)
 
+            build = getattr(self.args, "build", None)
+            if build:
+                version.build = build
+
         return version
 
     @classmethod

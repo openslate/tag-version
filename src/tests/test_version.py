@@ -193,8 +193,9 @@ class VersionTestCase(TestCase):
     def test_stringify_sugar_with_build(self, *mocks):
         """ensure the stringified version properly places the build number"""
         version = Version.parse("0.0.0-6-gb57b5ca-env--dev-TestModule")
+        version.build = "1234"
 
-        version_s = version.stringify_sugar(args=mock.Mock(build="1234"))
+        version_s = version.stringify_sugar()
 
         self.assertEquals(
             "0.0.0-1234-6-gb57b5ca-env--dev-TestModule",
