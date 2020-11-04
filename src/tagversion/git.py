@@ -186,7 +186,7 @@ class GitVersion(object):
             "--format",
             action="store",
             default="default",
-            help="print version as a specific format (currently supports 'default' and 'docker')",
+            help="print version as a specific format (currently supports 'default', 'docker', 'json', and 'sugar')",
         )
         parser.add_argument(
             "--patch",
