@@ -14,7 +14,7 @@ import sys
 from .exceptions import BranchError, VersionError
 from .version import Version
 
-
+# TODO: this implementation and its dependents should go away in favor of the version module.
 RC_RE = re.compile(r"(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*")
 
 INITIAL_VERSION = Version.parse("0.0.0")
