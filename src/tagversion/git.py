@@ -65,6 +65,7 @@ class GitVersion(object):
             lines = command.stdout.decode("utf8").strip().splitlines()
             branch = lines[0].strip()
 
+            # clean out control characters that may be present in `git` command output
             color_marker_idx = branch.find("\x1b")
             if color_marker_idx >= 0:
                 self.logger.warning(
