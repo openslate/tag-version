@@ -19,7 +19,7 @@ class ArgumentParser(argparse.ArgumentParser):
         """
         subparser_found = False
         for arg in sys.argv[1:]:
-            if arg in ['-h', '--help']:  # global help if no subparser
+            if arg in ["-h", "--help"]:  # global help if no subparser
                 break
         else:
             for x in self._subparsers._actions:
@@ -36,7 +36,13 @@ class ArgumentParser(argparse.ArgumentParser):
                 else:
                     args.insert(0, name)
 
-    def parse_args(self, args=None, namespace=None, default_subparser=None, default_subparser_args=None):
+    def parse_args(
+        self,
+        args=None,
+        namespace=None,
+        default_subparser=None,
+        default_subparser_args=None,
+    ):
         if default_subparser:
             self.set_default_subparser(default_subparser, args=default_subparser_args)
 

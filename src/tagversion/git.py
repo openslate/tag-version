@@ -5,36 +5,19 @@ import json
 import logging
 import os
 import re
+import typing
 import sh
 import shlex
 
 import sys
 
 from .exceptions import BranchError, VersionError
+from .version import Version
 
-'''
-    Uses a slightly modified version of this regex
-    https://regex101.com/r/E0iVVS/2
-'''
-SEMVER_RE = re.compile('''
-                       ^(?P<VersionTripple>
-                            (?P<Major>0|[1-9][0-9]*)\.
-                            (?P<Minor>0|[1-9][0-9]*)\.
-                            (?P<Patch>0|[1-9][0-9]*)
-                        ){1}
-                        (?P<Tags>(?:\-
-                            (?P<Prerelease>
-                                (?:(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+)){1}(?:\.(?=[0]{1}[0-9A-Za-z-]{0})(?:[0]{1})|\.(?=[1-9]{1}[0-9]*[A-Za-z]{0})(?:[0-9]+)|\.(?=[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)(?:[0-9A-Za-z-]+))*){1}
-                            ){0,1}(?:\+
-                            (?P<Build>
-                                (?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*
-                            ))
-                        ){0,1})$
-                       ''', re.VERBOSE)
+# TODO: this implementation and its dependents should go away in favor of the version module.
+RC_RE = re.compile(r"(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*")
 
-RC_RE = re.compile(r'(?P<full_version>(?P<stable>.*)rc(?P<rc_number>\d+)).*')
-
-INITIAL_VERSION = '0.0.0'
+INITIAL_VERSION = Version.parse("0.0.0")
 
 MAJOR = 0
 MINOR = 1
@@ -47,7 +30,7 @@ def print_error(buf):
 
 def is_calver(calver_version, calver_format):
     # ex: 201809.25 from 201809.25.1-rc
-    d = '.'.join(calver_version.split('.', 2)[:2])
+    d = ".".join(calver_version.split(".", 2)[:2])
     try:
         datetime.strptime(d, calver_format)
     except AttributeError:
@@ -58,10 +41,6 @@ def is_calver(calver_version, calver_format):
         return True
 
 
-def is_semver(semver_version):
-    return SEMVER_RE.match(semver_version) is not None
-
-
 def is_rc(version):
     return (RC_RE.match(version) is not None) if version else False
 
@@ -70,33 +49,58 @@ class GitVersion(object):
     """
     Get and set git version tag
     """
+
     def __init__(self, args=None):
         self.args = args
 
     @property
     def logger(self):
-        return logging.getLogger('{}.{}'.format(
-            __name__,
-            self.__class__.__name__))
+        return logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
 
     @property
     def branch(self):
-        branch = os.environ.get('GIT_BRANCH')
+        branch = os.environ.get("GIT_BRANCH")
         if branch is None:
-            command = sh.git(*shlex.split('rev-parse --abbrev-ref HEAD'))
-            lines = command.stdout.decode('utf8').strip().splitlines()
+            command = sh.git(*shlex.split("rev-parse --abbrev-ref HEAD"))
+            lines = command.stdout.decode("utf8").strip().splitlines()
             branch = lines[0].strip()
 
-            color_marker_idx = branch.find('\x1b')
+            # clean out control characters that may be present in `git` command output
+            color_marker_idx = branch.find("\x1b")
             if color_marker_idx >= 0:
-                self.logger.warning('found color marker in branch={}'.format(
-                    branch.encode("utf8")))
+                self.logger.warning(
+                    "found color marker in branch={}".format(branch.encode("utf8"))
+                )
                 branch = branch[:color_marker_idx]
 
         # clean string to remove unwanted characters
-        branch = branch.replace('/', '--')
+        branch = branch.replace("/", "--")
 
         return branch
+
+    def get_git_tag_version(self) -> typing.Optional[str]:
+        version_s = None
+
+        is_tagged = True  # when the commit is directly tagged
+        try:
+            command = sh.git(*shlex.split("describe --tags --exact-match"))
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
+            is_tagged = False
+
+        try:
+            command = sh.git(*shlex.split("describe --tags --always"))
+        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
+            pass
+        else:
+            version_s = command.stdout.decode("utf8").strip()
+
+            # if the branch flag was given,
+            # check to see if we are on a tagged commit
+            if self.args.branch and not is_tagged:
+                # this commit is not tagged directly, so append the branch
+                version_s = "{}-{}".format(version_s, self.branch)
+
+        return version_s
 
     @property
     def is_clean(self):
@@ -110,13 +114,13 @@ class GitVersion(object):
         """
         result = False
 
-        command_l = 'git status --untracked --short'.split()
+        command_l = "git status --untracked --short".split()
         command = getattr(sh, command_l[0])(command_l[1:])
 
-        lines = command.stdout.decode('utf8').splitlines()
+        lines = command.stdout.decode("utf8").splitlines()
         for line in lines:
             line = line.rstrip()
-            print_error('{}'.format(line))
+            print_error("{}".format(line))
 
         if not lines:
             result = True
@@ -125,111 +129,125 @@ class GitVersion(object):
 
     @property
     def is_calver(self):
-        return(is_calver(self.version, self.args.calver_format))
+        return is_calver(str(self.version), self.args.calver_format)
 
     @property
     def is_semver(self):
-        return(is_semver(self.version))
+        version = self.version
+
+        return version and version.is_semver
 
     @property
     def is_rc(self):
-        return(is_rc(self.version))
+        return is_rc(str(self.version))
 
     @property
     def version(self):
-        try:
-            command = sh.git(*shlex.split('describe --tags --always'))
-        except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-            return None
-        else:
-            version = command.stdout.decode('utf8').strip()
+        version = None
 
-            # if the branch flag was given,
-            # check to see if we are on a tagged commit
-            if self.args.branch:
-                try:
-                    command = sh.git(*shlex.split('describe --tags --exact-match'))
-                except sh.ErrorReturnCode_128:  # pylint: disable=E1101
-                    # not an exact match, so append the branch
-                    version = '{}-{}'.format(version, self.branch)
+        version_s = self.get_git_tag_version()
+        if version_s:
+            version = Version.parse(version_s)
 
-            return version
+            build = getattr(self.args, "build", None)
+            if build:
+                version.build = build
+
+        return version
 
     @classmethod
     def setup_subparser(cls, subcommand):
-        parser = subcommand.add_parser('version', help=cls.__doc__)
+        parser = subcommand.add_parser("version", help=cls.__doc__)
 
         parser.set_defaults(cls=cls)
         parser.add_argument(
-            '--bump', action='store_true',
-            help='perform a version bump, by default the current version is displayed'
+            "--build",
+            action="store",
+            help="pass along a build number to integrate to the output format",
         )
         parser.add_argument(
-            '-f', '--force', action='store_true',
-            help='perform the operation even if the working copy is dirty'
+            "--bump",
+            action="store_true",
+            help="perform a version bump, by default the current version is displayed",
         )
         parser.add_argument(
-            '--patch', action='store_true', default=True,
-            help='bump the patch version, this is the default bump if one is not specified'
+            "--no-display-prefix",
+            action="store_false",
+            dest="display_prefix",
+            default=True,
+            help="when printing out the version display the prefix",
         )
         parser.add_argument(
-            '--minor', action='store_true',
-            help='bump the minor version and reset patch back to 0'
+            "-f",
+            "--force",
+            action="store_true",
+            help="perform the operation even if the working copy is dirty",
         )
         parser.add_argument(
-            '--major', action='store_true',
-            help='bump the major version and reset minor and patch back to 0'
+            "--format",
+            action="store",
+            default="default",
+            help="print version as a specific format (currently supports 'default', 'docker', 'json', and 'sugar')",
         )
         parser.add_argument(
-            '--set',
-            help='set version to the given version'
+            "--patch",
+            action="store_true",
+            default=True,
+            help="bump the patch version, this is the default bump if one is not specified",
         )
         parser.add_argument(
-            '--semver', action='store_true',
-            help='only print out if the current tag is a semantic version, or exit 1'
+            "--prefix", action="store", help="add the given prefix to the version"
         )
         parser.add_argument(
-            '--calver', action='store_true',
-            help='only print out if the current tag is a calendar version, or exit 1'
+            "--prefix-separator",
+            action="store",
+            help="change the found separator to this one",
         )
         parser.add_argument(
-            '--calver-format', action='store_true', default='%Y%m.%d',
-            help='set the calver format (ex: \'%%Y%%m.%%d\')'
+            "--minor",
+            action="store_true",
+            help="bump the minor version and reset patch back to 0",
         )
         parser.add_argument(
-            '--rc', action='store_true',
-            help='when bumping, generate a release candidate tag instead of a proper version'
+            "--major",
+            action="store_true",
+            help="bump the major version and reset minor and patch back to 0",
+        )
+        parser.add_argument("--set", help="set version to the given version")
+        parser.add_argument(
+            "--semver",
+            action="store_true",
+            help="only print out if the current tag is a semantic version, or exit 1",
         )
         parser.add_argument(
-            '-m', '--message',
-            help='set the git tag message on the command line'
+            "--calver",
+            action="store_true",
+            help="only print out if the current tag is a calendar version, or exit 1",
         )
         parser.add_argument(
-            '--no-branch', action='store_false', dest='branch',
-            help='do not append branch to the version when current commit is not tagged'
+            "--calver-format",
+            action="store_true",
+            default="%Y%m.%d",
+            help="set the calver format (ex: '%%Y%%m.%%d')",
         )
-
-    def get_next_version(self, version):
-        # split the version and int'ify major, minor, and patch
-        split_version = version.split('-', 1)[0].split('.', 3)
-        for i in range(3):
-            split_version[i] = int(split_version[i])
-
-        if self.args.major:
-            split_version[MAJOR] += 1
-            split_version[MINOR] = 0
-            split_version[PATCH] = 0
-        elif self.args.minor:
-            split_version[MINOR] += 1
-            split_version[PATCH] = 0
-        elif self.args.patch:
-            split_version[PATCH] += 1
-
-        return split_version[:3]
+        parser.add_argument(
+            "--rc",
+            action="store_true",
+            help="when bumping, generate a release candidate tag instead of a proper version",
+        )
+        parser.add_argument(
+            "-m", "--message", help="set the git tag message on the command line"
+        )
+        parser.add_argument(
+            "--no-branch",
+            action="store_false",
+            dest="branch",
+            help="do not append branch to the version when current commit is not tagged",
+        )
 
     def get_split_version(self, version):
         """Split the provided version and int'ify major, minor, and patch"""
-        split_version = version.split('-', 1)[0].split('.', 3)
+        split_version = version.split("-", 1)[0].split(".", 3)
         for i in range(3):
             split_version[i] = int(split_version[i])
 
@@ -238,28 +256,32 @@ class GitVersion(object):
     def get_next_calver_version(self, version):
         # split the current date
         now = datetime.now().strftime(self.args.calver_format)
-        split_calver = now.split('.', 2)
+        split_calver = now.split(".", 2)
         for i in range(2):
             split_calver[i] = int(split_calver[i])
 
         # don't allow major/minor
         if self.args.major:
-            raise VersionError('''
+            raise VersionError(
+                """
                 You can not bump to a major calver release.
                 If you want to override this use `--set --force` instead
-                ''')
+                """
+            )
         elif self.args.minor:
-            raise VersionError('''
+            raise VersionError(
+                """
                 You can not bump to a minor calver release.
                 If you want to override this use `--set --force` instead
-                ''')
+                """
+            )
         elif self.args.patch:
             # if there are existing tags from today, bump the patch on the last one
             # otherwise move to the new date
-            todays_tags = sh.git(*shlex.split(f'tag --list {now}*'))
+            todays_tags = sh.git(*shlex.split(f"tag --list {now}*"))
 
             if todays_tags:
-                last_tag = sorted(todays_tags.split('\n'))[-1]
+                last_tag = sorted(todays_tags.split("\n"))[-1]
                 last_tag_split = self.get_split_version(last_tag)
 
                 if not is_rc(last_tag):
@@ -275,50 +297,44 @@ class GitVersion(object):
     def get_next_rc_version(version):
         matches = RC_RE.match(version)
 
-        current_rc = int(matches.group('rc_number'))
+        current_rc = int(matches.group("rc_number"))
         next_rc = current_rc + 1
 
         # use the full_version match in order to remove any git version suffix
-        full_version = matches.group('full_version')
-        next_version = full_version.replace('rc{}'.format(current_rc), 'rc{}'.format(next_rc))
+        full_version = matches.group("full_version")
+        next_version = full_version.replace(
+            "rc{}".format(current_rc), "rc{}".format(next_rc)
+        )
 
-        return next_version.split('.')
+        return next_version.split(".")
 
-    def bump(self):
-        current_version = self.version
-        current_is_rc = self.is_rc
+    def bump(self, version: "Version" = None) -> "Version":
+        current_version = (version and version.copy()) or self.version
 
         if current_version is None:
-            print_error('No commits found - please commit something before bumping')
+            print_error("No commits found - please commit something before bumping")
             return None
 
-        if self.args.rc and current_is_rc:
-            self.logger.info('Latest version is a release candidate, incrementing...')
-            next_version = self.get_next_rc_version(current_version)
-        elif self.args.calver:
+        if self.args.calver:
             next_version = self.get_next_calver_version(current_version)
         else:
-            # when this commit is an RC, don't bump any version number, just strip off the RC suffix
-            if current_is_rc:
-                matches = RC_RE.match(current_version)
-                next_version = [int(x) for x in matches.group('stable').split('.')]
+            if current_version.is_release:
+                raise VersionError(
+                    "Is version={} already bumped?".format(current_version)
+                )
+
+            if current_version.is_unreleased:
+                self.logger.info("No tags found, bumping initial version")
+                next_version = INITIAL_VERSION.copy()
             else:
-                split_dashes = current_version.split('-')
+                next_version = current_version.copy()
 
-                if len(split_dashes) == 1:
-                    raise VersionError(
-                        'Is version={} already bumped?'.format(current_version))
-                if len(split_dashes) == 2:
-                    self.logger.info('No tags found, bumping initial version')
-                    current_version = INITIAL_VERSION
-                else:
-                    current_version = split_dashes[0]
-
-                next_version = self.get_next_version(current_version)
-
-        if self.args.rc and not current_is_rc:
-            self.logger.info('Latest version is not a release candidate, generating initial rc tag...')
-            next_version[-1] = str(next_version[-1]) + 'rc1'
+            next_version.bump(
+                bump_major=self.args.major,
+                bump_minor=self.args.minor,
+                bump_patch=self.args.patch,
+                bump_prerelease=self.args.rc,
+            )
 
         return next_version
 
@@ -342,22 +358,23 @@ class GitVersion(object):
         if self.args.calver:
             if not is_calver(self.args.set, self.args.calver_format):
                 raise VersionError(
-                    'Trying to set a non-calver version: {}'.format(self.args.set))
+                    "Trying to set a non-calver version: {}".format(self.args.set)
+                )
 
-        return self.args.set.split('.')
+        return Version.parse(self.args.set)
 
     def get_tag_command(self, new_version):
-        tag_command = 'git tag -a '
+        tag_command = "git tag -a "
 
         if self.args.message:
-            tag_command += '-m {} '.format(json.dumps(self.args.message))
+            tag_command += "-m {} ".format(json.dumps(self.args.message))
 
         tag_command += new_version
         return tag_command
 
     def run(self):
         if not self.is_clean and not self.args.force:
-            print_error('Abort: working copy not clean.')
+            print_error("Abort: working copy not clean.")
 
             return 1
 
@@ -377,13 +394,18 @@ class GitVersion(object):
         status = 0
 
         if new_version is False:
+            # when a previous tag exists in the repo, something will be returned,
+            # but nothing if there are no previous tags
             if current_version:
-                print(self.version)
+                print(self.stringify(current_version))
             else:
-                next_version = self.get_next_version(INITIAL_VERSION)
-                print_error('No version found, use --bump to set to {}'.format(
-                    self.stringify(next_version)
-                ))
+                # error out with next steps on how to set the version
+                next_version = self.bump(version=INITIAL_VERSION)
+                print_error(
+                    "No version found, use --bump to set to {}".format(
+                        self.stringify(next_version)
+                    )
+                )
 
                 status = 1
         elif new_version is None:
@@ -409,5 +431,13 @@ class GitVersion(object):
 
         return status
 
-    def stringify(self, version):
-        return '.'.join([str(x) for x in version])
+    def stringify(self, new_version: "Version", format=None):
+        format = format or self.args.format
+
+        # customize the version object as specified by the arguments passed to the command
+        for attr in ("prefix", "prefix_separator"):
+            value = getattr(self.args, attr)
+            if value:
+                setattr(new_version, attr, value)
+
+        return new_version.stringify(format=format, args=self.args)

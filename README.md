@@ -73,6 +73,29 @@ The `--bump` flag will monotonically increase the version number.  By default, t
 Similarly, the `--minor` or `--major` argument can be given to increment the minor or major versions respectively.
 
 
+## Monorepo support
+
+There is initial support for independently versioning different components within a monorepo structure.  Support is using a convention where a component's version is prefixed with the name of the component.  For example, a monorepo may have a component named `api`.  Tags for api changes can be prefixed with the name of the component, for example, `api/1.2.3`.
+
+
+## Special formats
+
+In some cases it's necessary to output the version in different formats.  For instance, using tag-version to produce a Docker tag will break docker if a monorepo version as described above is used (docker does not like slashes in the tag).  To get a version that is docker-compatible, use the command:
+
+```
+tag-version version --format docker
+```
+
+### JSON format
+
+In the event that using the command's output for further processing within another piece of code is desires, the JSON format provides the version in a machine-usable format:
+
+```
+$ tag-version version --format json
+{"version_triple": "0.1.0", "major": "0", "minor": "1", "patch": "0", "prefix": "", "prefix_separator": "", "tags": "rc5-1-g2e13a96-feature--handle-monorepo-project-tag", "prerelease": "rc5-1-g2e13a96-feature--handle-monorepo-project-tag", "prerelease_separator": "", "build": ""}
+```
+
+
 ### Help text
 
 ```
