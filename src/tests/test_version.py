@@ -148,6 +148,16 @@ class VersionTestCase(TestCase):
             version.prerelease,
         )
 
+    def test_bump_to_prerelease(self, *mocks):
+        """Ensure underscores are supported in prerelease"""
+
+        version = Version.parse("OS_ContactAccountRelationship/1.5.0-1-g0b2460e-env--dev-OS_ContactAccountRelationship")
+
+        self.assertEquals(
+            "1-g0b2460e-env--dev-OS_ContactAccountRelationship",
+            version.prerelease,
+        )
+
     def test_parse_semver(self, *mocks):
         """Ensure a basic semver is parsed"""
 
