@@ -148,7 +148,7 @@ class VersionTestCase(TestCase):
             version.prerelease,
         )
 
-    def test_bump_to_prerelease(self, *mocks):
+    def test_parse_prerelease_with_underscore(self, *mocks):
         """Ensure underscores are supported in prerelease"""
 
         version = Version.parse("OS_ContactAccountRelationship/1.5.0-1-g0b2460e-env--dev-OS_ContactAccountRelationship")
