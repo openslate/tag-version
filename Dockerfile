@@ -7,7 +7,7 @@ WORKDIR ${SRC_DIR}
 
 RUN mkdir ${SRC_DIR}/results
 
-RUN pip3 install setuptools twine pylama pylint pylama-pylint pytest
+RUN pip3 install setuptools twine pylama pylint pylama-pylint pytest pyflakes==2.4.0
 
 COPY files/ /
 RUN chmod +x /usr/local/bin/*
