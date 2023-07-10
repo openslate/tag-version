@@ -1,4 +1,4 @@
-FROM python:3.11-bullseye
+FROM python:3.6-stretch
 LABEL maintainer="code@doubleverify.com"
 
 # Install tag-version
