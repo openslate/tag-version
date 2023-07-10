@@ -1,5 +1,5 @@
-FROM python:3.6-stretch
-MAINTAINER osslabs <code@openslatedata.com>
+FROM python:3.11-bullseye
+LABEL maintainer="code@doubleverify.com"
 
 # Install tag-version
 ENV SRC_DIR /usr/local/src
