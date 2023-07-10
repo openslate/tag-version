@@ -117,7 +117,7 @@ class GitVersion(object):
         command_l = "git status --untracked --short".split()
         command = getattr(sh, command_l[0])(command_l[1:])
 
-        lines = command.stdout.decode("utf8").splitlines()
+        lines = command.splitlines()
         for line in lines:
             line = line.rstrip()
             print_error("{}".format(line))
