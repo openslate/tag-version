@@ -20,6 +20,6 @@ setup(
     url="https://github.com/openslate/tag-version",
     package_dir={"": "src"},
     packages=["tagversion"],
-    install_requires=["sh"],
+    install_requires=["sh==1.14.3"],
     entry_points={"console_scripts": ["tag-version = tagversion.entrypoints:main"]},
 )
