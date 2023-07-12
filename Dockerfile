@@ -1,5 +1,5 @@
 FROM python:3.6-stretch
-MAINTAINER osslabs <code@openslatedata.com>
+LABEL maintainer="code@doubleverify.com"
 
 # Install tag-version
 ENV SRC_DIR /usr/local/src
@@ -7,7 +7,7 @@ WORKDIR ${SRC_DIR}
 
 RUN mkdir ${SRC_DIR}/results
 
-RUN pip3 install setuptools twine pylama pylint pylama-pylint
+RUN pip3 install setuptools twine pylama pylint pylama-pylint pytest pyflakes==2.4.0
 
 COPY files/ /
 RUN chmod +x /usr/local/bin/*

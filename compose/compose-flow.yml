@@ -24,5 +24,8 @@ tasks:
   jenkinslint:
     command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log -f pylint || /bin/true'
 
+  jenkinstest:
+    command: compose-flow compose run --rm app /bin/bash -c 'pytest --junitxml=results/report.xml'
+
   publish:
     command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh

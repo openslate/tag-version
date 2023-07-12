@@ -164,3 +164,26 @@ tag-version --bump --rc
 tag-version --bump
 # latest tag: 0.1.0
 ```
+
+### Tag Version Development
+
+Development is done w/ Docker and `compose-flow`
+
+First you setup some default evn vars
+```compose-flow -e local env edit```
+
+```
+CF_ENV=local
+PYPI_PASSWORD=
+PYPI_USERNAME=
+```
+
+Then to build the container
+```compose-flow -e local compose build```
+
+Then to shell into the container
+```compose-flow -e local compose run --rm app /bin/bash```
+
+
+Testing can then be ran via pytest 
+```compose-flow -e local compose run --rm app /bin/bash -c pytest```

@@ -62,7 +62,7 @@ class GitVersion(object):
         branch = os.environ.get("GIT_BRANCH")
         if branch is None:
             command = sh.git(*shlex.split("rev-parse --abbrev-ref HEAD"))
-            lines = command.stdout.decode("utf8").strip().splitlines()
+            lines = command.strip().splitlines()
             branch = lines[0].strip()
 
             # clean out control characters that may be present in `git` command output
@@ -92,7 +92,7 @@ class GitVersion(object):
         except sh.ErrorReturnCode_128:  # pylint: disable=E1101
             pass
         else:
-            version_s = command.stdout.decode("utf8").strip()
+            version_s = command.strip()
 
             # if the branch flag was given,
             # check to see if we are on a tagged commit
@@ -117,7 +117,7 @@ class GitVersion(object):
         command_l = "git status --untracked --short".split()
         command = getattr(sh, command_l[0])(command_l[1:])
 
-        lines = command.stdout.decode("utf8").splitlines()
+        lines = command.splitlines()
         for line in lines:
             line = line.rstrip()
             print_error("{}".format(line))

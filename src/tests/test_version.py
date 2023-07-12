@@ -10,7 +10,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.0")
         version.bump(bump_major=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "1.0.0",
             str(version),
         )
@@ -21,7 +21,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.0")
         version.bump(bump_minor=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "0.1.0",
             str(version),
         )
@@ -32,7 +32,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.0")
         version.bump(bump_patch=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "0.0.1",
             str(version),
         )
@@ -43,7 +43,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.1")
         version.bump(bump_prerelease=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "0.0.1rc1",
             str(version),
         )
@@ -54,7 +54,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.1rc1")
         version.bump(bump_prerelease=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "0.0.1rc2",
             str(version),
         )
@@ -65,7 +65,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.1.27-16-g5befeb2-feature--skip-prefix-rows")
         version.bump(bump_patch=True, bump_prerelease=True)
 
-        self.assertEquals(
+        self.assertEqual(
             "0.1.28rc1",
             str(version),
         )
@@ -76,7 +76,7 @@ class VersionTestCase(TestCase):
         version = Version.parse("0.0.1rc1")
         version.bump()
 
-        self.assertEquals(
+        self.assertEqual(
             "0.0.1",
             str(version),
         )
@@ -86,7 +86,7 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("0.0.1rc16")
 
-        self.assertEquals(
+        self.assertEqual(
             True,
             version.is_prerelease,
         )
@@ -96,7 +96,7 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("0.0.1rc16")
 
-        self.assertEquals(
+        self.assertEqual(
             True,
             version.is_rc,
         )
@@ -106,12 +106,12 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("66cf7c2-HEAD")
 
-        self.assertEquals(
+        self.assertEqual(
             False,
             version.is_prerelease,
         )
 
-        self.assertEquals(
+        self.assertEqual(
             True,
             version.is_unreleased,
         )
@@ -121,12 +121,12 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("TestModule/0.0.1-16-g5befeb2")
 
-        self.assertEquals(
+        self.assertEqual(
             "16-g5befeb2",
             version.prerelease,
         )
 
-        self.assertEquals(
+        self.assertEqual(
             Version(
                 major=0,
                 minor=0,
@@ -143,7 +143,7 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("0.0.1rc16")
 
-        self.assertEquals(
+        self.assertEqual(
             "rc16",
             version.prerelease,
         )
@@ -151,9 +151,11 @@ class VersionTestCase(TestCase):
     def test_parse_prerelease_with_underscore(self, *mocks):
         """Ensure underscores are supported in prerelease"""
 
-        version = Version.parse("OS_ContactAccountRelationship/1.5.0-1-g0b2460e-env--dev-OS_ContactAccountRelationship")
+        version = Version.parse(
+            "OS_ContactAccountRelationship/1.5.0-1-g0b2460e-env--dev-OS_ContactAccountRelationship"
+        )
 
-        self.assertEquals(
+        self.assertEqual(
             "1-g0b2460e-env--dev-OS_ContactAccountRelationship",
             version.prerelease,
         )
@@ -163,18 +165,18 @@ class VersionTestCase(TestCase):
 
         version = Version.parse("0.0.1")
 
-        self.assertEquals(Version(major=0, minor=0, patch=1), version)
+        self.assertEqual(Version(major=0, minor=0, patch=1), version)
 
     def test_parse_semver_with_prefix(self, *mocks):
         """Ensure a basic semver with a prefix is parsed"""
 
         version = Version.parse("TestModule/0.0.1")
 
-        self.assertEquals(
+        self.assertEqual(
             Version(major=0, minor=0, patch=1, prefix="TestModule/"), version
         )
 
-        self.assertEquals("TestModule/0.0.1", str(version))
+        self.assertEqual("TestModule/0.0.1", str(version))
 
     def test_parse_untagged(self, *mocks):
         """Ensure an untagged version can be parsed"""
@@ -182,12 +184,12 @@ class VersionTestCase(TestCase):
         version_s = "66cf7c2-HEAD"
         version = Version.parse(version_s)
 
-        self.assertEquals(
+        self.assertEqual(
             Version(major=None, minor=None, patch=None, prerelease=version_s),
             version,
         )
 
-        self.assertEquals(version_s, str(version))
+        self.assertEqual(version_s, str(version))
 
     def test_stringify_json(self, *mocks):
         """Ensure the version is returned as json"""
@@ -195,7 +197,7 @@ class VersionTestCase(TestCase):
 
         version_s = version.stringify_json()
 
-        self.assertEquals(
+        self.assertEqual(
             '{"version_triple": "0.0.0", "major": "0", "minor": "0", "patch": "0", "prefix": "", "prefix_separator": "", "tags": "-6-gb57b5ca-env--dev-TestModule", "prerelease": "6-gb57b5ca-env--dev-TestModule", "prerelease_separator": "-", "build": ""}',
             version_s,
         )
@@ -207,7 +209,7 @@ class VersionTestCase(TestCase):
 
         version_s = version.stringify_sugar()
 
-        self.assertEquals(
+        self.assertEqual(
             "0.0.0-1234-6-gb57b5ca-env--dev-TestModule",
             version_s,
         )

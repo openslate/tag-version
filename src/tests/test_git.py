@@ -49,7 +49,7 @@ class GitTestCase(TestCase):
 
         new_version = git_version.bump()
 
-        self.assertEquals("0.0.1", str(new_version))
+        self.assertEqual("0.0.1", str(new_version))
 
     def test_bump_rc(self, *mocks):
         """
@@ -63,11 +63,11 @@ class GitTestCase(TestCase):
 
         git_version = GitVersion(args)
 
-        self.assertEquals(version_mock.return_value, git_version.version)
+        self.assertEqual(version_mock.return_value, git_version.version)
 
         new_version = git_version.bump()
 
-        self.assertEquals("0.1.28", str(new_version))
+        self.assertEqual("0.1.28", str(new_version))
 
     def test_bump_rc_to_stable(self, *mocks):
         """
@@ -79,11 +79,11 @@ class GitTestCase(TestCase):
 
         git_version = GitVersion(args)
 
-        self.assertEquals(version_mock.return_value, git_version.version)
+        self.assertEqual(version_mock.return_value, git_version.version)
 
         new_version = git_version.bump()
 
-        self.assertEquals("0.1.28", str(new_version))
+        self.assertEqual("0.1.28", str(new_version))
 
     def test_bump_rev_rc(self, *mocks):
         """
@@ -95,11 +95,11 @@ class GitTestCase(TestCase):
 
         git_version = GitVersion(args)
 
-        self.assertEquals(version_mock.return_value, git_version.version)
+        self.assertEqual(version_mock.return_value, git_version.version)
 
         new_version = git_version.bump()
 
-        self.assertEquals("0.1.28rc2", new_version)
+        self.assertEqual("0.1.28rc2", new_version)
 
     def test_get_next_rc_version(self, *mocks):
         """
@@ -107,13 +107,13 @@ class GitTestCase(TestCase):
         """
         next_version = GitVersion.get_next_rc_version(RC_VERSION)
 
-        self.assertEquals(["0", "1", "28rc2"], next_version)
+        self.assertEqual(["0", "1", "28rc2"], next_version)
 
     def test_is_rc(self, *mocks):
         """
         Ensures RC is properly detected
         """
-        self.assertEquals(True, is_rc(RC_VERSION))
+        self.assertEqual(True, is_rc(RC_VERSION))
 
     def test_bump_project_prefix(self, *mocks):
         """
@@ -129,7 +129,7 @@ class GitTestCase(TestCase):
         new_version = git_version.bump()
         new_version_s = git_version.stringify(new_version)
 
-        self.assertEquals("TestModule/0.0.2", new_version_s)
+        self.assertEqual("TestModule/0.0.2", new_version_s)
 
     def test_bump_project_set_prefix(self, *mocks):
         """
@@ -146,7 +146,7 @@ class GitTestCase(TestCase):
 
         new_version_s = git_version.stringify(new_version)
 
-        self.assertEquals("NewPrefix/0.0.2", new_version_s)
+        self.assertEqual("NewPrefix/0.0.2", new_version_s)
 
     def test_set(self, *mocks):
         """Ensure checking for a version being set parses the version"""
@@ -155,9 +155,9 @@ class GitTestCase(TestCase):
 
         new_version = git_version.check_set()
 
-        self.assertEquals("1", new_version.major)
-        self.assertEquals("2", new_version.minor)
-        self.assertEquals("3", new_version.patch)
+        self.assertEqual("1", new_version.major)
+        self.assertEqual("2", new_version.minor)
+        self.assertEqual("3", new_version.patch)
 
     def test_stringify_change_prefix_separator(self, *mocks):
         """
@@ -172,4 +172,4 @@ class GitTestCase(TestCase):
         git_version = GitVersion(args)
         new_version_s = git_version.stringify(git_version.version)
 
-        self.assertEquals("TestModule-0.0.1-16-g5befeb2", new_version_s)
+        self.assertEqual("TestModule-0.0.1-16-g5befeb2", new_version_s)
