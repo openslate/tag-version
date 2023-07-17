@@ -10,4 +10,4 @@
   
 ### Changed
  
-Updated the `sh` output from stdout to a string in order to be compatible with later versions of Python 
+- Updated the `sh` output from stdout to a string in order to be compatible with later versions of Python 
